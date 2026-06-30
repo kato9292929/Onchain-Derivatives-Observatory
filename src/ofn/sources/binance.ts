@@ -3,7 +3,7 @@
 //   → { markPrice, indexPrice, lastFundingRate, ... }  funding は8時間ごと。
 
 import { httpJson } from "../../core/http.js";
-import { log } from "../../core/logger.js";
+import { logSource } from "../../core/logger.js";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { FIXTURE_DIR } from "../../core/config.js";
@@ -25,7 +25,7 @@ function fromFixture(symbols: string[]): RawVenueFunding[] {
 
 export async function collectBinance(symbols: string[], offline = false): Promise<RawVenueFunding[]> {
   if (offline) {
-    log.info("binance: offline fixture mode");
+    logSource("OFN", "binance", "fixture", { reason: "offline flag" });
     return fromFixture(symbols);
   }
   const out: RawVenueFunding[] = [];
@@ -43,10 +43,10 @@ export async function collectBinance(symbols: string[], offline = false): Promis
         openInterestUsd: null,
       });
     }
-    log.info("binance: live", { count: out.length });
+    logSource("OFN", "binance", "live", { count: out.length });
     return out;
   } catch (err) {
-    log.warn("binance live failed, falling back to fixture", { err: String(err) });
+    logSource("OFN", "binance", "fixture", { reason: String(err) });
     return fromFixture(symbols);
   }
 }

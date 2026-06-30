@@ -4,7 +4,7 @@
 // funding は1時間ごとの rate(文字列)。oraclePx を spot指数、markPx を mark とみなす。
 
 import { httpJson } from "../../core/http.js";
-import { log } from "../../core/logger.js";
+import { logSource } from "../../core/logger.js";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { FIXTURE_DIR } from "../../core/config.js";
@@ -39,7 +39,7 @@ function fromFixture(symbols: string[]): RawVenueFunding[] {
 
 export async function collectHyperliquid(symbols: string[], offline = false): Promise<RawVenueFunding[]> {
   if (offline) {
-    log.info("hyperliquid: offline fixture mode");
+    logSource("OFN", "hyperliquid", "fixture", { reason: "offline flag" });
     return fromFixture(symbols);
   }
   try {
@@ -70,10 +70,10 @@ export async function collectHyperliquid(symbols: string[], offline = false): Pr
       });
     }
     if (out.length === 0) throw new Error("no matching symbols in hyperliquid universe");
-    log.info("hyperliquid: live", { count: out.length });
+    logSource("OFN", "hyperliquid", "live", { count: out.length });
     return out;
   } catch (err) {
-    log.warn("hyperliquid live failed, falling back to fixture", { err: String(err) });
+    logSource("OFN", "hyperliquid", "fixture", { reason: String(err) });
     return fromFixture(symbols);
   }
 }

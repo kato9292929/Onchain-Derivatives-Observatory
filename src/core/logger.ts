@@ -19,3 +19,17 @@ export const log = {
   warn: (m: string, meta?: Record<string, unknown>) => emit("warn", m, meta),
   error: (m: string, meta?: Record<string, unknown>) => emit("error", m, meta),
 };
+
+/**
+ * 会場ごとに「ライブ取得できたか/fixtureに落ちたか」を1行で明示する。
+ * 値の捏造はしない。事実(mode=live|fixture と理由)をそのまま出す。
+ * 例: [OFN] source venue=binance mode=fixture reason=...
+ */
+export function logSource(
+  mod: "OFN" | "PCM",
+  venue: string,
+  mode: "live" | "fixture",
+  extra: Record<string, unknown> = {},
+): void {
+  emit("info", `[${mod}] source venue=${venue} mode=${mode}`, { module: mod, venue, mode, ...extra });
+}

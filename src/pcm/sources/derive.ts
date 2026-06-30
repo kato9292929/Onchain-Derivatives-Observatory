@@ -4,7 +4,7 @@
 // ライブ取得が不可/未確定な項目があるため、取得できない場合は fixture にフォールバックする。
 // 実受取(receivedPremium)は「板の約定 or RFQの落札額」。出所は ivSource とともに開示する。
 
-import { log } from "../../core/logger.js";
+import { logSource } from "../../core/logger.js";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { FIXTURE_DIR } from "../../core/config.js";
@@ -32,7 +32,7 @@ function fromFixture(symbols: string[]): RawOption[] {
 
 export async function collectDerive(symbols: string[], offline = false): Promise<RawOption[]> {
   if (offline) {
-    log.info("derive: offline fixture mode");
+    logSource("PCM", "derive", "fixture", { reason: "offline flag" });
     return fromFixture(symbols);
   }
   // NOTE: ライブのオプション約定・mark IV 取得は会場API仕様確定後に実装する(設計段階)。
@@ -41,7 +41,7 @@ export async function collectDerive(symbols: string[], offline = false): Promise
     // 設計: get_instruments → 対象限月/ストライク選定 → get_ticker で IV/spot/板 → 約定で receivedPremium。
     throw new Error("derive live adapter not yet wired (design stage); using fixture");
   } catch (err) {
-    log.warn("derive live unavailable, falling back to fixture", { err: String(err) });
+    logSource("PCM", "derive", "fixture", { reason: String(err) });
     return fromFixture(symbols);
   }
 }
