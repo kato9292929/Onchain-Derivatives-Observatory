@@ -1,7 +1,8 @@
 // ODO 共通型定義。OFN/PCM/採点が共有する。
 
 export type CarryTag = "harvestable" | "fundable";
-export type VenueKind = "onchain" | "cex";
+// OFNはオンチェーン会場のみで構成する。CEXは基準線に組み込まない(型レベルで再導入を防ぐ)。
+export type VenueKind = "onchain";
 
 /** OFN: 1会場×1資産の日次funding/basis観測 */
 export interface FundingObservation {

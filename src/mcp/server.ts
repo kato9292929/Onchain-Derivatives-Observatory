@@ -40,7 +40,7 @@ export function buildMcpServer(): McpServer {
   );
   server.tool(
     "funding_venues",
-    "同一資産の会場横断funding(オンチェーン vs CEX乖離)",
+    "同一資産の会場横断funding(オンチェーン会場どうしの比較)",
     { symbol: z.string() },
     async ({ symbol }) => ({ content: [{ type: "text", text: JSON.stringify(fundingVenues(symbol), null, 2) }] }),
   );

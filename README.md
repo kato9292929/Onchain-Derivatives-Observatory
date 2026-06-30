@@ -14,6 +14,13 @@
 
 両モジュールは「cron・時系列保存・REST+MCP配信・x402・採点」という同じ骨格を共有する。土台は `src/core` に1本化し、OFN/PCM はその上のモジュール。
 
+### 会場ポリシー(日本拠点)
+
+無登録/規制対象の **CEX(Binance・Bybit・Deribit 等)は基準線としてデータに組み込まない**。
+OFN はオンチェーン会場のみで成立させる(現状ライブは **Hyperliquid**。Drift/Aevo/Lighter/Extended は設計段階)。
+会場横断比較は「オンチェーン会場どうしの funding ばらつき」として出す(CEX乖離の意味づけは持たない)。
+PCM はオンチェーンのオプション会場 **Derive** をライブ対象とする(下記)。
+
 ---
 
 ## スタック決定(と理由)
@@ -102,7 +109,7 @@ facilitator 未設定時は **fail-closed**(支払い提示でも拒否)。
 | `GET /funding/nowcast/current` | 借り需要ゲージ最新値(Majors / Long-tail 別) |
 | `GET /funding/nowcast/history` | ゲージ時系列 |
 | `GET /funding/asset/{symbol}` | 資産別 funding・basis・carry(fundable/harvestable タグ付き) |
-| `GET /funding/venues/{symbol}` | 会場横断 funding(オンチェーン vs CEX 乖離) |
+| `GET /funding/venues/{symbol}` | 会場横断 funding(オンチェーン会場どうしの比較) |
 | `GET /funding/carry/leaderboard` | harvestable net carry ランキング + キャリー収穫指数 |
 | `GET /funding/carry/index/{basket}` | キャリー収穫指数(累積, 基準日=100)の時系列 |
 | `GET /premium/capture/current` | 会場・戦略別の最新捕捉率 |
@@ -138,8 +145,9 @@ facilitator 未設定時は **fail-closed**(支払い提示でも拒否)。
 2. **x402 facilitator**: `X402_FACILITATOR_URL` を設定(未設定だと fail-closed)。Base mainnet USDC で per-call 受領。
 3. **ERC-8004 agentId 登録**: ODO 専用 ID を IdentityRegistry に新規登録(AAの55560・InvestX とは別)。得られた値を `ODO_AGENT_ID` または `data/scoring/identity.json` に記録。
 4. **cron 有効化**: スケジュールはデフォルトブランチでのみ発火する(GitHub 仕様)。マージ後に有効。検証は `workflow_dispatch` で手動実行可能。
+5. **Derive ライブ検証**: PCM の Derive adapter はライブ実装済(`public/get_instruments`→`get_ticker`→`get_trade_history`)。ただしサンドボックスからは egress 制限で到達できず、ランナーIPも会場によりジオブロック(451/403)されうる。ランナー上で `PCM daily collect` を `workflow_dispatch` し、ログの `[PCM] source venue=derive mode=live`(成功)/ `mode=fixture reason=...`(到達不可)で実取得可否を判定する。`mode=live` を確認するまで「Deriveがライブで動いた」とは言わない。
 
-環境変数は `.env.example` を参照。
+環境変数は `.env.example` を参照。`DERIVE_API_URL` で Derive ベースURL(既定 `https://api.lyra.finance`)を上書き可能。
 
 ---
 
@@ -149,7 +157,10 @@ facilitator 未設定時は **fail-closed**(支払い提示でも拒否)。
 - [x] GitHub Actions cron(日次 OFN/PCM・週次採点)を用意、`data/` にコミットする構成
 - [x] REST API と MCP サーバーが起動し、ログがクリーン(構造化JSON)
 - [x] x402 per-call ゲートが機能(無償アクセスが 402 で弾かれる)
-- [x] 最低1資産1会場で OFN(ゲージ+キャリー指数)と PCM(捕捉率)が e2e で通る(BTC / Hyperliquid・Derive)
+- [x] 最低1資産1会場で OFN(ゲージ+キャリー指数)と PCM(捕捉率)が e2e で通る(BTC / Hyperliquid・Derive、オフライン fixture で実証)
+- [x] OFN はオンチェーン会場のみ(CEX基準線を除去)。Hyperliquid のライブ収集は従来どおり
+- [x] PCM の Derive adapter をライブ実装(IV・実受取とも公開APIで取得可と一次資料で確認)
+- [ ] Derive `mode=live` の実取得確認(ランナー上で workflow_dispatch、運用者)
 - [ ] 本番デプロイ Online・facilitator 接続・agentId オンチェーン登録(= 上記「運用者チェックリスト」。コードは対応済み、実行は運用者)
 
 ## やらないこと

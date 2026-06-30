@@ -6,7 +6,6 @@ import { writeDaily } from "../core/storage.js";
 import { log } from "../core/logger.js";
 import type { FundingObservation, OfnDaily, CarryTag } from "../core/types.js";
 import { collectHyperliquid, type RawVenueFunding } from "./sources/hyperliquid.js";
-import { collectBinance } from "./sources/binance.js";
 
 export interface CollectOpts {
   date?: string;
@@ -68,7 +67,6 @@ export async function collectOfn(opts: CollectOpts = {}): Promise<OfnDaily> {
   const raw: RawVenueFunding[] = [];
   for (const venue of venues) {
     if (venue === "hyperliquid") raw.push(...(await collectHyperliquid(symbols, offline)));
-    else if (venue === "binance") raw.push(...(await collectBinance(symbols, offline)));
     else log.warn("venue not implemented yet, skipping", { venue });
   }
 

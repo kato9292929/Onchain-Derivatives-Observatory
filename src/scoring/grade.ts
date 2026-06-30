@@ -38,13 +38,15 @@ function resolveMetric(metric: string, week: string): number | string | null {
     return mean(perDay);
   }
 
-  const disloc = metric.match(/^(\w+)\.dislocation$/);
-  if (disloc && ofn.length > 0) {
-    const sym = disloc[1]!;
-    const first = venuesForSymbol(ofn[0]!, sym).dislocationApy;
-    const last = venuesForSymbol(ofn[ofn.length - 1]!, sym).dislocationApy;
+  // オンチェーン会場どうしの funding ばらつき(歪み)の週内変化。負なら縮小。
+  // 会場が1つだけの期間は比較対象が無く null(解決不能)。CEX乖離の意味づけは持たない。
+  const spread = metric.match(/^(\w+)\.venueSpread$/);
+  if (spread && ofn.length > 0) {
+    const sym = spread[1]!;
+    const first = venuesForSymbol(ofn[0]!, sym).crossVenueSpreadApy;
+    const last = venuesForSymbol(ofn[ofn.length - 1]!, sym).crossVenueSpreadApy;
     if (first === null || last === null) return null;
-    return Math.abs(last) - Math.abs(first); // 負なら縮小
+    return last - first;
   }
 
   if (metric === "pcm.captureRate.rank1") {

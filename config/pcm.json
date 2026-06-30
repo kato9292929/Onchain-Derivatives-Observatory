@@ -11,14 +11,8 @@
     "derive": {
       "label": "Derive (旧Lyra)",
       "status": "implemented",
-      "ivSource": "venue mark IV (chain/oracle)",
-      "notes": "オプションチェーン・IV・約定が取得可能な見込み。最初の実装対象。"
-    },
-    "deribit": {
-      "label": "Deribit",
-      "status": "reference",
-      "ivSource": "Deribit mark IV",
-      "notes": "CEX。フェア値の参考IV/参考プレミアム基準線。売買はしない、参照のみ。"
+      "ivSource": "derive get_ticker:option_pricing.iv",
+      "notes": "ライブadapter実装済(public/get_instruments→get_ticker→get_trade_history)。IV=option_pricing.iv、spot=index_price、実受取=直近trade_price(無ければ板best_bid_price)。ベースURL=DERIVE_API_URL(既定 https://api.lyra.finance)。サンドボックスからは到達不可のためライブ検証はランナー上のworkflow_dispatchで行う。"
     },
     "rysk": {
       "label": "Rysk",

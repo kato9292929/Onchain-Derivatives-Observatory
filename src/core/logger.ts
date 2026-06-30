@@ -23,7 +23,7 @@ export const log = {
 /**
  * 会場ごとに「ライブ取得できたか/fixtureに落ちたか」を1行で明示する。
  * 値の捏造はしない。事実(mode=live|fixture と理由)をそのまま出す。
- * 例: [OFN] source venue=binance mode=fixture reason=...
+ * 例: [OFN] source venue=hyperliquid mode=live / [PCM] source venue=derive mode=fixture reason=...
  */
 export function logSource(
   mod: "OFN" | "PCM",

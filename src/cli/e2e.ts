@@ -11,8 +11,8 @@ import { log } from "../core/logger.js";
 async function main() {
   log.info("=== ODO e2e (offline fixtures) ===");
 
-  // 1) OFN: Hyperliquid BTC を中心に Majors を採取(+CEX基準線)
-  const ofn = await collectOfn({ offline: true, venues: ["hyperliquid", "binance"] });
+  // 1) OFN: オンチェーン会場(Hyperliquid)で Majors を採取
+  const ofn = await collectOfn({ offline: true, venues: ["hyperliquid"] });
   log.info("OFN collected", { observations: ofn.observations.length });
 
   // 2) PCM: Derive BTC を採取

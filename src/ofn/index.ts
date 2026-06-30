@@ -90,18 +90,22 @@ export function carryLeaderboard(daily: OfnDaily): Array<{
     .sort((x, y) => y.netCarryApy - x.netCarryApy);
 }
 
-/** 同一資産の会場横断funding(オンチェーン vs CEX乖離)。 */
+/**
+ * 同一資産の会場横断funding(オンチェーン会場どうしの比較)。
+ * CEX乖離の意味づけは持たない。オンチェーン会場が複数ある場合に、会場間のfunding APYの
+ * ばらつき(最大−最小)を歪み/裁定シグナルとして出す。現状ライブはHyperliquidのみのため、
+ * 会場が1つだと crossVenueSpreadApy は null(比較対象が無い)になる。
+ */
 export function venuesForSymbol(daily: OfnDaily, symbol: string) {
-  const rows = daily.observations.filter((o) => o.symbol === symbol);
-  const onchain = rows.filter((o) => o.venueKind === "onchain").map((o) => o.fundingApy);
-  const cex = rows.filter((o) => o.venueKind === "cex").map((o) => o.fundingApy);
-  const onchainMean = mean(onchain);
-  const cexMean = mean(cex);
+  // OFNはオンチェーン会場のみ。安全のため明示的にonchainへ絞る。
+  const rows = daily.observations.filter((o) => o.symbol === symbol && o.venueKind === "onchain");
+  const apys = rows.map((o) => o.fundingApy);
+  const spread = apys.length >= 2 ? Math.max(...apys) - Math.min(...apys) : null;
   return {
     symbol,
     venues: rows.map((o) => ({ venue: o.venue, kind: o.venueKind, fundingApy: o.fundingApy })),
-    onchainMeanApy: onchainMean,
-    cexMeanApy: cexMean,
-    dislocationApy: onchainMean !== null && cexMean !== null ? onchainMean - cexMean : null,
+    onchainMeanApy: mean(apys),
+    venueCount: rows.length,
+    crossVenueSpreadApy: spread,
   };
 }

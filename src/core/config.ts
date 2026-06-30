@@ -17,7 +17,7 @@ function load<T>(name: string): T {
 }
 
 export interface VenueMeta {
-  kind: "onchain" | "cex";
+  kind: "onchain";
   label: string;
   fundingIntervalHours: number;
   status: string;

@@ -1,5 +1,5 @@
 {
-  "_comment": "会場メタデータ。funding付与間隔(時間)から年間区間数を算出しAPY換算に用いる。kind=onchain/cex。statusは取得実装の現状。",
+  "_comment": "会場メタデータ。funding付与間隔(時間)から年間区間数を算出しAPY換算に用いる。OFNはオンチェーン会場のみで構成する(日本拠点の方針として無登録/規制対象CEXは基準線に組み込まない)。statusは取得実装の現状。",
   "venues": {
     "hyperliquid": {
       "kind": "onchain",
@@ -7,20 +7,6 @@
       "fundingIntervalHours": 1,
       "status": "implemented",
       "notes": "perp funding は1時間ごと付与。公開infoエンドポイント (POST /info)。"
-    },
-    "binance": {
-      "kind": "cex",
-      "label": "Binance",
-      "fundingIntervalHours": 8,
-      "status": "implemented",
-      "notes": "CEX基準線。fundingは8時間ごと。fapi公開エンドポイント。"
-    },
-    "bybit": {
-      "kind": "cex",
-      "label": "Bybit",
-      "fundingIntervalHours": 8,
-      "status": "design",
-      "notes": "CEX基準線(設計)。取得可否確認後に有効化。"
     },
     "drift": {
       "kind": "onchain",

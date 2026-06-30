@@ -1,4 +1,4 @@
-// CLI: OFN日次収集。--offline で fixture、--symbols=BTC,ETH、--venues=hyperliquid,binance。
+// CLI: OFN日次収集。--offline で fixture、--symbols=BTC,ETH、--venues=hyperliquid。
 
 import { collectOfn } from "../ofn/collect.js";
 import { log } from "../core/logger.js";
