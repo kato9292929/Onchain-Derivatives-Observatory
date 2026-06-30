@@ -1,0 +1,32 @@
+{
+  "_comment": "資産ユニバースとバスケット。harvestable=spotが存在しデルタニュートラルで実収穫可能。fundable=perpのfunding観測は可能だがspot無しで実収穫不可。",
+  "baskets": {
+    "majors": {
+      "label": "Majors",
+      "symbols": ["BTC", "ETH", "SOL", "HYPE"]
+    },
+    "longtail": {
+      "label": "Long-tail",
+      "symbols": []
+    }
+  },
+  "assets": {
+    "BTC": { "tag": "harvestable", "hasSpot": true, "basket": "majors" },
+    "ETH": { "tag": "harvestable", "hasSpot": true, "basket": "majors" },
+    "SOL": { "tag": "harvestable", "hasSpot": true, "basket": "majors" },
+    "HYPE": { "tag": "harvestable", "hasSpot": true, "basket": "majors" }
+  },
+  "carry": {
+    "_comment": "net carry の想定コスト。年率(小数)。手数料は往復ノーショナル比、借入は年率。",
+    "takerFeeAnnualizedBps": 0,
+    "roundTripFeeBps": 6,
+    "borrowApyDefault": 0.0,
+    "notionalCapUsd": 2000000,
+    "_capComment": "OI・流動性から想定ノーショナルの上限。大口で取り切れない利回りを過大表示しないため。"
+  },
+  "indices": {
+    "carryHarvestBaseValue": 100,
+    "winsorizePct": 0.1,
+    "_winsorizeComment": "借り需要ゲージの平均算出時、上下それぞれ10%を刈り込む(Kioxia +900%等の外れ値支配を防ぐ)。"
+  }
+}

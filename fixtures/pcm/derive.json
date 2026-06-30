@@ -1,0 +1,47 @@
+[
+  {
+    "venue": "derive",
+    "symbol": "BTC",
+    "strategy": "covered_call",
+    "instrument": "BTC-20260926-65000-C",
+    "strike": 65000,
+    "expiry": "2026-09-26T08:00:00Z",
+    "optionType": "call",
+    "spot": 61000,
+    "iv": 0.55,
+    "ivSource": "derive mark IV (chain/oracle)",
+    "receivedPremium": 4900,
+    "openInterestUsd": 5000000,
+    "volumeUsd": 200000
+  },
+  {
+    "venue": "derive",
+    "symbol": "BTC",
+    "strategy": "cash_secured_put",
+    "instrument": "BTC-20260926-55000-P",
+    "strike": 55000,
+    "expiry": "2026-09-26T08:00:00Z",
+    "optionType": "put",
+    "spot": 61000,
+    "iv": 0.6,
+    "ivSource": "derive mark IV (chain/oracle)",
+    "receivedPremium": 3500,
+    "openInterestUsd": 3000000,
+    "volumeUsd": 80000
+  },
+  {
+    "venue": "derive",
+    "symbol": "BTC",
+    "strategy": "naked_call",
+    "instrument": "BTC-20260926-80000-C",
+    "strike": 80000,
+    "expiry": "2026-09-26T08:00:00Z",
+    "optionType": "call",
+    "spot": 61000,
+    "iv": 0.7,
+    "ivSource": "derive mark IV (chain/oracle)",
+    "receivedPremium": 250,
+    "openInterestUsd": 20000,
+    "volumeUsd": 5000
+  }
+]

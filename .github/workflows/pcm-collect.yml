@@ -1,0 +1,47 @@
+name: PCM daily collect
+
+# 日次cron。オプションのフェア値・実受取・捕捉率を採取し data/pcm/ にコミットする。
+on:
+  schedule:
+    - cron: "20 0 * * *" # 毎日 00:20 UTC
+  workflow_dispatch:
+    inputs:
+      offline:
+        description: "fixtureで実行(true/false)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pcm-collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - name: Collect PCM
+        run: |
+          if [ "${{ github.event.inputs.offline }}" = "true" ]; then
+            npm run pcm:collect -- --offline
+          else
+            npm run pcm:collect
+          fi
+      - name: Commit data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/pcm
+          if git diff --cached --quiet; then
+            echo "no PCM changes"
+          else
+            git commit -m "chore(pcm): daily premium capture observation $(date -u +%Y-%m-%d)"
+            git push
+          fi

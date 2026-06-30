@@ -1,0 +1,6 @@
+[
+  { "venue": "hyperliquid", "symbol": "BTC", "fundingRate": 0.0000125, "fundingIntervalHours": 1, "markPrice": 61000, "spotPrice": 60950, "openInterestUsd": 320000000 },
+  { "venue": "hyperliquid", "symbol": "ETH", "fundingRate": 0.0000100, "fundingIntervalHours": 1, "markPrice": 3000, "spotPrice": 2998, "openInterestUsd": 145000000 },
+  { "venue": "hyperliquid", "symbol": "SOL", "fundingRate": 0.0000150, "fundingIntervalHours": 1, "markPrice": 150.0, "spotPrice": 149.8, "openInterestUsd": 42000000 },
+  { "venue": "hyperliquid", "symbol": "HYPE", "fundingRate": 0.0000220, "fundingIntervalHours": 1, "markPrice": 28.0, "spotPrice": 27.95, "openInterestUsd": 18000000 }
+]

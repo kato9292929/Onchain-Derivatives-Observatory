@@ -1,0 +1,35 @@
+{
+  "name": "onchain-derivatives-observatory",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ODO — Onchain Derivatives Observatory. Observes, scores and serves derivatives data (perp funding/basis carry + option premium capture). Non-custodial. x402 seller.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "ofn:collect": "tsx src/cli/ofn-collect.ts",
+    "pcm:collect": "tsx src/cli/pcm-collect.ts",
+    "score:declare": "tsx src/cli/score.ts declare",
+    "score:grade": "tsx src/cli/score.ts grade",
+    "api": "tsx src/api/server.ts",
+    "api:prod": "node dist/api/server.js",
+    "mcp": "tsx src/mcp/server.ts",
+    "test": "node --test --import tsx test/*.test.ts",
+    "e2e": "tsx src/cli/e2e.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "express": "^4.21.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

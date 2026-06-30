@@ -1,0 +1,51 @@
+name: Scoring weekly
+
+# 週次。月曜に前向き宣言を作成、日曜に実現値と照合して採点。結果は agentId に紐づけて data/scoring/ にコミット。
+on:
+  schedule:
+    - cron: "0 1 * * 1" # 月 01:00 UTC: 宣言
+    - cron: "30 1 * * 0" # 日 01:30 UTC: 採点
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "declare または grade"
+        required: true
+        default: "grade"
+
+permissions:
+  contents: write
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - name: Determine mode
+        id: mode
+        run: |
+          if [ -n "${{ github.event.inputs.mode }}" ]; then
+            echo "mode=${{ github.event.inputs.mode }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "0 1 * * 1" ]; then
+            echo "mode=declare" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=grade" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run scoring
+        env:
+          ODO_AGENT_ID: ${{ vars.ODO_AGENT_ID }}
+        run: npm run score:${{ steps.mode.outputs.mode }}
+      - name: Commit data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/scoring
+          if git diff --cached --quiet; then
+            echo "no scoring changes"
+          else
+            git commit -m "chore(scoring): ${{ steps.mode.outputs.mode }} $(date -u +%Y-%m-%d)"
+            git push
+          fi

@@ -1,0 +1,8 @@
+{
+  "agentId": null,
+  "registry": "",
+  "chain": "base",
+  "domain": "",
+  "registeredAt": null,
+  "note": "未登録(設計段階)。運用者が ERC-8004 IdentityRegistry に ODO専用agentId を登録し、本ファイルまたは ODO_AGENT_ID を更新する。AAの55560・InvestXとは別IDにすること。"
+}

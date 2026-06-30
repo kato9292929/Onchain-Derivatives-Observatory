@@ -1,0 +1,24 @@
+[
+  {
+    "declarationId": "OFN-2026-W27-1",
+    "week": "2026-W27",
+    "gradedAt": "2026-06-30T03:21:23.916Z",
+    "realizedValue": 0.12078857142857144,
+    "hit": true,
+    "brier": 0,
+    "error": 0.12078857142857144,
+    "note": "OK",
+    "agentId": null
+  },
+  {
+    "declarationId": "PCM-2026-W27-2",
+    "week": "2026-W27",
+    "gradedAt": "2026-06-30T03:21:23.916Z",
+    "realizedValue": "derive/covered_call",
+    "hit": true,
+    "brier": 0,
+    "error": null,
+    "note": "OK",
+    "agentId": null
+  }
+]

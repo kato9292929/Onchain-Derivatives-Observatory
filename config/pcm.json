@@ -1,0 +1,36 @@
+{
+  "_comment": "PCM前提。フェア値算出に使うIV出所と金利は全件開示する(moatの肝)。",
+  "riskFreeRate": 0.045,
+  "riskFreeRateSource": "US 3M T-bill 近似。実運用ではオラクル/設定で更新。",
+  "lowLiquidity": {
+    "minOpenInterestUsd": 50000,
+    "minDailyVolumeUsd": 10000,
+    "_comment": "これ未満の板での約定は low_liquidity タグを付け、捕捉率の信頼度を下げる。"
+  },
+  "venues": {
+    "derive": {
+      "label": "Derive (旧Lyra)",
+      "status": "implemented",
+      "ivSource": "venue mark IV (chain/oracle)",
+      "notes": "オプションチェーン・IV・約定が取得可能な見込み。最初の実装対象。"
+    },
+    "deribit": {
+      "label": "Deribit",
+      "status": "reference",
+      "ivSource": "Deribit mark IV",
+      "notes": "CEX。フェア値の参考IV/参考プレミアム基準線。売買はしない、参照のみ。"
+    },
+    "rysk": {
+      "label": "Rysk",
+      "status": "design",
+      "ivSource": "RFQ落札額(時系列取得可否を確認中)",
+      "notes": "RFQの落札額がAPI/subgraphで取れる範囲で追加(設計段階)。"
+    },
+    "hypercall": {
+      "label": "Hypercall (Synapse)",
+      "status": "excluded",
+      "notes": "調査時点でプレプロダクト、ライブのオプションデータ無し。初期対象外。ライブ化後に追加。"
+    }
+  },
+  "strategies": ["covered_call", "cash_secured_put", "naked_call", "naked_put"]
+}

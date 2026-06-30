@@ -1,0 +1,49 @@
+name: OFN daily collect
+
+# 日次cron。GitHub Actionsのランナーから各会場の公開APIを叩き、観測を data/ofn/ にコミットする。
+# 注: スケジュールトリガはデフォルトブランチでのみ発火する(GitHub仕様)。検証用に workflow_dispatch も用意。
+
+on:
+  schedule:
+    - cron: "10 0 * * *" # 毎日 00:10 UTC
+  workflow_dispatch:
+    inputs:
+      offline:
+        description: "fixtureで実行(true/false)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ofn-collect
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - name: Collect OFN
+        run: |
+          if [ "${{ github.event.inputs.offline }}" = "true" ]; then
+            npm run ofn:collect -- --offline
+          else
+            npm run ofn:collect
+          fi
+      - name: Commit data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/ofn
+          if git diff --cached --quiet; then
+            echo "no OFN changes"
+          else
+            git commit -m "chore(ofn): daily funding/basis observation $(date -u +%Y-%m-%d)"
+            git push
+          fi

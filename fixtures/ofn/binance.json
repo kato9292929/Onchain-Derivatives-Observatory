@@ -1,0 +1,5 @@
+[
+  { "venue": "binance", "symbol": "BTC", "fundingRate": 0.0001, "fundingIntervalHours": 8, "markPrice": 61010, "spotPrice": 60990, "openInterestUsd": null },
+  { "venue": "binance", "symbol": "ETH", "fundingRate": 0.00008, "fundingIntervalHours": 8, "markPrice": 3001, "spotPrice": 2999, "openInterestUsd": null },
+  { "venue": "binance", "symbol": "SOL", "fundingRate": 0.00012, "fundingIntervalHours": 8, "markPrice": 150.1, "spotPrice": 149.9, "openInterestUsd": null }
+]
