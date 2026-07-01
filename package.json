@@ -15,6 +15,7 @@
     "pcm:collect": "tsx src/cli/pcm-collect.ts",
     "score:declare": "tsx src/cli/score.ts declare",
     "score:grade": "tsx src/cli/score.ts grade",
+    "agent:register": "tsx scripts/register-agent.ts",
     "api": "tsx src/api/server.ts",
     "api:prod": "node dist/api/server.js",
     "mcp": "tsx src/mcp/server.ts",

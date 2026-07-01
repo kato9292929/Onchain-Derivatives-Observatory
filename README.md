@@ -126,6 +126,8 @@ facilitator 未設定時は **fail-closed**(支払い提示でも拒否)。
 - **キャリー収穫指数**(累積, 基準日=100): `harvestable` のみで構成。OI から想定ノーショナル上限を置き、大口で取り切れない利回りを過大表示しない。funding が負なら指数は下がる(それで正しい)。
 - **fundable / harvestable タグ**: spot が無く実収穫できない perp(HIP-3 等)は `fundable` として水準観測のみ。デルタニュートラルで実収穫できるものだけ `harvestable`。
 - **PCM 前提開示**: 使った IV の出所(`ivSource`)と金利を全件 observation に残す。薄商いは `lowLiquidity` タグで捕捉率の信頼度を下げる。
+- **生funding値の保存**: OFN 各観測に取得元の生 funding 値(正規化前・未加工)`fundingRateRaw` を残す。複数資産が同一値でも、それがソース由来(Hyperliquid の金利成分=0.01%/8h への張り付き)か取得ロジック由来かを後から判別できる。
+- **実測 vs 近似の分離**: PCM の実受取は `receiptSource`(`last_trade`=実約定 / `board_bid`=板bid近似)で全件区別。リーダーボードは両者を混ぜず別々に返す(検証可能性を濁さない)。建玉は near-ATM かつ流動性優先で選定し、時間窓内の実約定があればそれを、無ければ板bidを使う。
 
 ---
 
@@ -143,7 +145,12 @@ facilitator 未設定時は **fail-closed**(支払い提示でも拒否)。
 
 1. **デプロイ**: API/MCP を本番ホスト(osd/JIN に合わせる)へ。`X402_PAY_TO` 等を環境変数で設定。
 2. **x402 facilitator**: `X402_FACILITATOR_URL` を設定(未設定だと fail-closed)。Base mainnet USDC で per-call 受領。
-3. **ERC-8004 agentId 登録**: ODO 専用 ID を IdentityRegistry に新規登録(AAの55560・InvestX とは別)。得られた値を `ODO_AGENT_ID` または `data/scoring/identity.json` に記録。
+3. **ERC-8004 agentId 登録**(配線済・実行は運用者): ODO 専用 ID を IdentityRegistry に新規登録(AAの55560・InvestX とは別)。
+   - 配線: 採点層は `ODO_AGENT_ID`(または `data/scoring/identity.json`)から agentId を読み、宣言・採点の全記録に紐づける。未設定なら「未登録」(ダミーは入れない)。
+   - 手順: `scripts/register-agent.ts`(`npm run agent:register`)。Circle Developer-Controlled Wallet でウォレットを用意し、ERC-8004 IdentityRegistry へ `newAgent(agentDomain, agentAddress)` を contractExecution(AAと同じ作法)。
+   - 必要な資格情報/設定(`.env.example` 参照): `CIRCLE_API_KEY`・`CIRCLE_ENTITY_SECRET`・`CIRCLE_WALLET_SET_ID`(または `CIRCLE_WALLET_ID`)、`ODO_ERC8004_REGISTRY`(**現行の公開情報でアドレスを確認**)、`ODO_ERC8004_ABI_FN`(登録関数、現行デプロイで要確認)、`ODO_AGENT_DOMAIN`。これらが揃わないとスクリプトは fail-closed。
+   - 登録後: 発行された agentId を `npm run agent:register -- --set-agent-id=<agentId>` で `data/scoring/identity.json` に記録(または `ODO_AGENT_ID` を設定)。
+   - **サンドボックス/CI からは実行しない**(秘密鍵・ガス・Circle資格情報が必要)。この環境で「登録できた」とは書かない。
 4. **cron 有効化**: スケジュールはデフォルトブランチでのみ発火する(GitHub 仕様)。マージ後に有効。検証は `workflow_dispatch` で手動実行可能。
 5. **Derive ライブ検証**: PCM の Derive adapter はライブ実装済(`public/get_instruments`→`get_ticker`→`get_trade_history`)。ただしサンドボックスからは egress 制限で到達できず、ランナーIPも会場によりジオブロック(451/403)されうる。ランナー上で `PCM daily collect` を `workflow_dispatch` し、ログの `[PCM] source venue=derive mode=live`(成功)/ `mode=fixture reason=...`(到達不可)で実取得可否を判定する。`mode=live` を確認するまで「Deriveがライブで動いた」とは言わない。
 
@@ -159,8 +166,10 @@ facilitator 未設定時は **fail-closed**(支払い提示でも拒否)。
 - [x] x402 per-call ゲートが機能(無償アクセスが 402 で弾かれる)
 - [x] 最低1資産1会場で OFN(ゲージ+キャリー指数)と PCM(捕捉率)が e2e で通る(BTC / Hyperliquid・Derive、オフライン fixture で実証)
 - [x] OFN はオンチェーン会場のみ(CEX基準線を除去)。Hyperliquid のライブ収集は従来どおり
-- [x] PCM の Derive adapter をライブ実装(IV・実受取とも公開APIで取得可と一次資料で確認)
-- [ ] Derive `mode=live` の実取得確認(ランナー上で workflow_dispatch、運用者)
+- [x] PCM の Derive adapter をライブ実装(IV・実受取とも公開APIで取得可と一次資料で確認)。near-ATM・流動性優先、last_trade優先→board_bidフォールバック、receiptSourceで実測/近似を分離
+- [x] OFN 各観測に生funding値 `fundingRateRaw` を追加(funding同一値の素性を後日判別可能に)
+- [x] 採点層の agentId 配線(env/設定から読み全記録に紐づけ、未設定は未登録・ダミー無し)+ 登録スクリプト `npm run agent:register`
+- [ ] Derive `mode=live` の実取得確認・funding素性の数日データ確認(ランナー上で workflow_dispatch、運用者)
 - [ ] 本番デプロイ Online・facilitator 接続・agentId オンチェーン登録(= 上記「運用者チェックリスト」。コードは対応済み、実行は運用者)
 
 ## やらないこと

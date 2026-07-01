@@ -27,9 +27,16 @@ const DEFAULT: Identity = {
 
 export function getIdentity(): Identity {
   const stored = readNamed<Identity>("scoring", "identity");
-  const envId = process.env.ODO_AGENT_ID;
   const base = stored ?? DEFAULT;
-  return envId ? { ...base, agentId: envId } : base;
+  // 環境変数が優先(設定より上)。未設定の項目は stored/DEFAULT を使う。ダミーは入れない。
+  const merged: Identity = {
+    ...base,
+    agentId: process.env.ODO_AGENT_ID ?? base.agentId,
+    registry: process.env.ODO_ERC8004_REGISTRY ?? base.registry,
+    chain: process.env.ODO_CHAIN ?? base.chain,
+    domain: process.env.ODO_AGENT_DOMAIN ?? base.domain,
+  };
+  return merged;
 }
 
 export function setIdentity(partial: Partial<Identity>): Identity {

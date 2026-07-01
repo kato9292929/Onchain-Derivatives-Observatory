@@ -11,6 +11,8 @@ export interface FundingObservation {
   symbol: string;
   /** 1区間あたりfunding(小数。例: 0.000125 = 0.0125%) */
   fundingRate: number;
+  /** 取得元が返した生の funding 値(正規化前・未加工)。同一値がソース由来か取得ロジック由来かの判別用。 */
+  fundingRateRaw: string | number;
   /** 会場の付与間隔(時間) */
   fundingIntervalHours: number;
   /** APY換算 funding(小数) */
@@ -74,6 +76,8 @@ export interface PremiumCaptureObservation {
   receivedPremium: number; // 売り手実受取(USD)
   captureRate: number; // 実受取 / フェア値
   takeRate: number; // 1 - captureRate
+  /** 実受取の出所: 実約定(last_trade)か板bid近似(board_bid)。集計で混ぜない。 */
+  receiptSource: "last_trade" | "board_bid";
   lowLiquidity: boolean; // 薄商いタグ
   openInterestUsd: number | null;
   volumeUsd: number | null;

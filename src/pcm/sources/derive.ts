@@ -42,16 +42,24 @@ export interface RawOption {
   iv: number; // 観測IV(小数)
   ivSource: string; // 出所開示
   receivedPremium: number; // 売り手実受取(USD, 原資産1単位あたり)
+  /** 実受取の出所: 実約定(last_trade)か板bid近似(board_bid)か。集計で混ぜないための区別。 */
+  receiptSource: "last_trade" | "board_bid";
   openInterestUsd: number | null;
   volumeUsd: number | null;
 }
 
 const DERIVE_API = process.env.DERIVE_API_URL || "https://api.lyra.finance";
 const MIN_DAYS = 3; // 0-DTE のノイズを避け、最も近い 3日以上先の限月を採る
+const ATM_BAND = 0.15; // near-ATM: spot ±15% のストライク帯から選ぶ
+const MAX_CANDIDATES = 8; // near-ATM 候補の ticker 取得上限(1日1回のcronで妥当)
+const LAST_TRADE_WINDOW_SEC = 24 * 3600; // 実約定として採用する時間窓(24時間以内)
 
 function fromFixture(symbols: string[]): RawOption[] {
   const raw = JSON.parse(readFileSync(resolve(FIXTURE_DIR, "pcm", "derive.json"), "utf8")) as RawOption[];
-  return raw.filter((r) => symbols.includes(r.symbol));
+  // fixture は実約定ではない例示データ。実測と混ざらないよう board_bid(近似)として扱う。
+  return raw
+    .filter((r) => symbols.includes(r.symbol))
+    .map((r) => ({ ...r, receiptSource: r.receiptSource ?? "board_bid" }));
 }
 
 // --- Derive RPC ヘルパー(POST、エンベロープ {id, result} を剥がす) ---
@@ -71,18 +79,57 @@ interface DeriveInstrument {
   option_details?: { strike: string; expiry: number; option_type: string };
 }
 interface DeriveTicker {
-  index_price: string;
-  mark_price: string;
-  best_bid_price: string;
-  best_bid_amount: string;
-  option_pricing?: { iv: string };
+  index_price?: string;
+  mark_price?: string;
+  best_bid_price?: string;
+  best_bid_amount?: string;
+  option_pricing?: { iv?: string; i?: string };
   option_details?: { strike: string; expiry: number; option_type: string };
-  stats?: { open_interest?: string; contract_volume?: string };
+  // stats は公式生成モデルでは open_interest / contract_volume(full)。slim版は oi / c。両対応。
+  stats?: { open_interest?: string; contract_volume?: string; oi?: string; c?: string };
+  // full ticker には別途トップレベルの open_interest 辞書がある: Dict[str, List[{current_open_interest}]]
+  open_interest?: Record<string, Array<{ current_open_interest?: string }>>;
 }
 interface DeriveTrade {
   trade_price: string;
   trade_amount: string;
   timestamp: number;
+}
+
+function num(x: unknown): number | null {
+  const n = Number(x);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** 建玉(契約数)を寛容に読む。stats(full/slim)→トップレベル辞書の順。取れなければ null(0で埋めない)。 */
+function readOpenInterest(tk: DeriveTicker): number | null {
+  const s = num(tk.stats?.open_interest) ?? num(tk.stats?.oi);
+  if (s !== null) return s;
+  const dict = tk.open_interest;
+  if (dict && typeof dict === "object") {
+    let sum = 0;
+    let seen = false;
+    for (const arr of Object.values(dict)) {
+      for (const e of arr ?? []) {
+        const v = num(e?.current_open_interest);
+        if (v !== null) {
+          sum += v;
+          seen = true;
+        }
+      }
+    }
+    if (seen) return sum;
+  }
+  return null;
+}
+
+/** 24h出来高(契約数)を寛容に読む。stats(full/slim)。取れなければ null。 */
+function readVolume(tk: DeriveTicker): number | null {
+  return num(tk.stats?.contract_volume) ?? num(tk.stats?.c);
+}
+
+function readIv(tk: DeriveTicker): number | null {
+  return num(tk.option_pricing?.iv) ?? num(tk.option_pricing?.i);
 }
 
 function normOptionType(s: string | undefined, instrumentName: string): "call" | "put" {
@@ -92,26 +139,26 @@ function normOptionType(s: string | undefined, instrumentName: string): "call" |
   return instrumentName.trim().toUpperCase().endsWith("-P") ? "put" : "call";
 }
 
-/** covered_call 用に、spot を少し上回る(OTM)コールを対象限月から1つ選ぶ。 */
-function selectCoveredCall(
+/** covered_call 候補: 対象限月の near-ATM(spot±ATM_BAND)なコールを、ATM距離の近い順に上限本数返す。 */
+function selectCoveredCallCandidates(
   instruments: DeriveInstrument[],
   spot: number,
   expirySec: number,
-): DeriveInstrument | null {
-  const target = spot * 1.05;
-  const calls = instruments.filter(
-    (i) =>
-      i.is_active &&
-      i.option_details &&
-      i.option_details.expiry === expirySec &&
-      normOptionType(i.option_details.option_type, i.instrument_name) === "call",
-  );
-  if (calls.length === 0) return null;
-  calls.sort(
-    (a, b) =>
-      Math.abs(Number(a.option_details!.strike) - target) - Math.abs(Number(b.option_details!.strike) - target),
-  );
-  return calls[0] ?? null;
+): DeriveInstrument[] {
+  const lo = spot * (1 - ATM_BAND);
+  const hi = spot * (1 + ATM_BAND);
+  return instruments
+    .filter(
+      (i) =>
+        i.is_active &&
+        i.option_details &&
+        i.option_details.expiry === expirySec &&
+        normOptionType(i.option_details.option_type, i.instrument_name) === "call" &&
+        Number(i.option_details.strike) >= lo &&
+        Number(i.option_details.strike) <= hi,
+    )
+    .sort((a, b) => Math.abs(Number(a.option_details!.strike) - spot) - Math.abs(Number(b.option_details!.strike) - spot))
+    .slice(0, MAX_CANDIDATES);
 }
 
 /** 最も近い、MIN_DAYS 以上先の限月(unix秒)を選ぶ。なければ最も近い将来の限月。 */
@@ -128,11 +175,16 @@ function selectExpiry(instruments: DeriveInstrument[], nowSec: number): number |
   return far ?? expiries[0]!;
 }
 
+/** timestamp を ms に正規化(sec/ms 両対応)。 */
+function toMs(ts: number): number {
+  return ts > 1e12 ? ts : ts * 1000;
+}
+
 async function collectOneSymbol(symbol: string, nowMs: number): Promise<RawOption | null> {
   // spot は perp ティッカーの index_price から取得(名前付きフィールドで曖昧さ無し)。
   const perp = await rpc<DeriveTicker>("public/get_ticker", { instrument_name: `${symbol}-PERP` });
-  const spot = Number(perp.index_price);
-  if (!Number.isFinite(spot) || spot <= 0) throw new Error(`bad spot for ${symbol}: ${perp.index_price}`);
+  const spot = num(perp.index_price);
+  if (spot === null || spot <= 0) throw new Error(`bad spot for ${symbol}: ${perp.index_price}`);
 
   const instruments = await rpc<DeriveInstrument[]>("public/get_instruments", {
     currency: symbol,
@@ -141,44 +193,70 @@ async function collectOneSymbol(symbol: string, nowMs: number): Promise<RawOptio
   });
   const expirySec = selectExpiry(instruments, Math.floor(nowMs / 1000));
   if (expirySec === null) throw new Error(`no future option expiry for ${symbol}`);
-  const inst = selectCoveredCall(instruments, spot, expirySec);
-  if (!inst) throw new Error(`no covered_call candidate for ${symbol} @${expirySec}`);
+  const candidates = selectCoveredCallCandidates(instruments, spot, expirySec);
+  if (candidates.length === 0) throw new Error(`no near-ATM covered_call candidate for ${symbol} @${expirySec}`);
 
-  const tk = await rpc<DeriveTicker>("public/get_ticker", { instrument_name: inst.instrument_name });
-  const iv = Number(tk.option_pricing?.iv);
-  if (!Number.isFinite(iv) || iv <= 0) throw new Error(`no iv for ${inst.instrument_name}`);
+  // near-ATM 候補の ticker を取得し、流動性(出来高→建玉→板bid有無)優先で1つ選ぶ。
+  const priced: Array<{ inst: DeriveInstrument; tk: DeriveTicker; vol: number | null; oi: number | null; bid: number | null }> =
+    [];
+  for (const inst of candidates) {
+    try {
+      const tk = await rpc<DeriveTicker>("public/get_ticker", { instrument_name: inst.instrument_name });
+      if (readIv(tk) === null) continue; // IVが無い建玉はフェア値を出せないので除外
+      priced.push({ inst, tk, vol: readVolume(tk), oi: readOpenInterest(tk), bid: num(tk.best_bid_price) });
+    } catch (e) {
+      log.warn("derive get_ticker failed for candidate", { instrument: inst.instrument_name, err: String(e) });
+    }
+  }
+  if (priced.length === 0) throw new Error(`no priced candidate with iv for ${symbol}`);
+  priced.sort((a, b) => {
+    // 出来高 desc → 建玉 desc → 板bid有り優先 → ATM距離 asc
+    const av = a.vol ?? -1, bv = b.vol ?? -1;
+    if (av !== bv) return bv - av;
+    const ao = a.oi ?? -1, bo = b.oi ?? -1;
+    if (ao !== bo) return bo - ao;
+    const ab = a.bid && a.bid > 0 ? 1 : 0, bb = b.bid && b.bid > 0 ? 1 : 0;
+    if (ab !== bb) return bb - ab;
+    return Math.abs(Number(a.inst.option_details!.strike) - spot) - Math.abs(Number(b.inst.option_details!.strike) - spot);
+  });
+  const chosen = priced[0]!;
+  const { inst, tk } = chosen;
+  const iv = readIv(tk)!;
   const od = tk.option_details ?? inst.option_details!;
   const strike = Number(od.strike);
   const optionType = normOptionType(od.option_type, inst.instrument_name);
-  const tickerSpot = Number(tk.index_price) || spot;
+  const tickerSpot = num(tk.index_price) ?? spot;
 
-  // 実受取: 直近の約定 trade_price。無ければ板 best_bid_price(売り手が即時に当てて受け取れる価格)。
+  // 実受取: 時間窓内(LAST_TRADE_WINDOW_SEC)の直近約定 trade_price を優先。無い場合のみ板 best_bid_price。
   let received: number | null = null;
-  let receivedSource = "";
+  let receiptSource: "last_trade" | "board_bid" | null = null;
   try {
     const th = await rpc<{ trades: DeriveTrade[] }>("public/get_trade_history", {
       instrument_name: inst.instrument_name,
-      page_size: 1,
+      page_size: 20,
     });
-    const last = th.trades?.[0];
-    if (last && Number.isFinite(Number(last.trade_price))) {
-      received = Number(last.trade_price);
-      receivedSource = "last_trade";
+    const recent = (th.trades ?? [])
+      .filter((t) => num(t.trade_price) !== null && nowMs - toMs(t.timestamp) <= LAST_TRADE_WINDOW_SEC * 1000)
+      .sort((a, b) => toMs(b.timestamp) - toMs(a.timestamp));
+    if (recent.length > 0) {
+      received = num(recent[0]!.trade_price);
+      receiptSource = "last_trade";
     }
   } catch (e) {
     log.warn("derive trade_history failed, will try board bid", { instrument: inst.instrument_name, err: String(e) });
   }
   if (received === null) {
-    const bid = Number(tk.best_bid_price);
-    if (Number.isFinite(bid) && bid > 0) {
+    const bid = num(tk.best_bid_price);
+    if (bid !== null && bid > 0) {
       received = bid;
-      receivedSource = "board_bid";
+      receiptSource = "board_bid";
     }
   }
-  if (received === null) throw new Error(`no received premium (no trade, no bid) for ${inst.instrument_name}`);
+  if (received === null || receiptSource === null)
+    throw new Error(`no received premium (no in-window trade, no bid) for ${inst.instrument_name}`);
 
-  const oi = Number(tk.stats?.open_interest);
-  const vol = Number(tk.stats?.contract_volume);
+  const oi = readOpenInterest(tk);
+  const vol = readVolume(tk);
 
   return {
     venue: "derive",
@@ -190,10 +268,12 @@ async function collectOneSymbol(symbol: string, nowMs: number): Promise<RawOptio
     optionType,
     spot: tickerSpot,
     iv,
-    ivSource: `derive get_ticker:option_pricing.iv; received=${receivedSource}`,
+    ivSource: "derive get_ticker:option_pricing.iv",
     receivedPremium: received,
-    openInterestUsd: Number.isFinite(oi) ? oi * tickerSpot : null,
-    volumeUsd: Number.isFinite(vol) ? vol * tickerSpot : null,
+    receiptSource,
+    // 契約数 × spot で USD ノーショナル換算。取れなければ null(0で埋めない)。
+    openInterestUsd: oi !== null ? oi * tickerSpot : null,
+    volumeUsd: vol !== null ? vol * tickerSpot : null,
   };
 }
 

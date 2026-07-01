@@ -39,14 +39,14 @@ export function computeCapture(raw: RawOption, nowIso: string): PremiumCaptureOb
     receivedPremium: raw.receivedPremium,
     captureRate,
     takeRate: 1 - captureRate,
+    receiptSource: raw.receiptSource,
     lowLiquidity,
     openInterestUsd: raw.openInterestUsd,
     volumeUsd: raw.volumeUsd,
   };
 }
 
-/** 会場×戦略別の捕捉率リーダーボード(高い順)。薄商いは信頼度を下げて末尾寄りに。 */
-export function captureLeaderboard(obs: PremiumCaptureObservation[]) {
+function rank(obs: PremiumCaptureObservation[]) {
   return [...obs]
     .map((o) => ({
       venue: o.venue,
@@ -55,10 +55,22 @@ export function captureLeaderboard(obs: PremiumCaptureObservation[]) {
       instrument: o.instrument,
       captureRate: o.captureRate,
       takeRate: o.takeRate,
+      receiptSource: o.receiptSource,
       lowLiquidity: o.lowLiquidity,
     }))
     .sort((a, b) => {
       if (a.lowLiquidity !== b.lowLiquidity) return a.lowLiquidity ? 1 : -1;
       return b.captureRate - a.captureRate;
     });
+}
+
+/**
+ * 会場×戦略別の捕捉率リーダーボード。
+ * 実測(last_trade)と近似(board_bid)は検証可能性のため分けて返す。混ぜない。
+ */
+export function captureLeaderboard(obs: PremiumCaptureObservation[]) {
+  return {
+    lastTrade: rank(obs.filter((o) => o.receiptSource === "last_trade")),
+    boardBidApprox: rank(obs.filter((o) => o.receiptSource === "board_bid")),
+  };
 }

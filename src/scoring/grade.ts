@@ -52,9 +52,11 @@ function resolveMetric(metric: string, week: string): number | string | null {
   if (metric === "pcm.captureRate.rank1") {
     const all = pcm.flatMap((d) => d.observations);
     if (all.length === 0) return null;
-    const lb = captureLeaderboard(all).filter((r) => !r.lowLiquidity);
-    if (lb.length === 0) return null;
-    return `${lb[0]!.venue}/${lb[0]!.strategy}`;
+    const lb = captureLeaderboard(all);
+    // 実測(last_trade)を優先。無ければ近似(board_bid)。実測と近似は混ぜない。
+    const pool = (lb.lastTrade.length > 0 ? lb.lastTrade : lb.boardBidApprox).filter((r) => !r.lowLiquidity);
+    if (pool.length === 0) return null;
+    return `${pool[0]!.venue}/${pool[0]!.strategy}`;
   }
 
   return null;

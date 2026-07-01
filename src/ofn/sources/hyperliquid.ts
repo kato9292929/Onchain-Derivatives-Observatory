@@ -13,6 +13,8 @@ export interface RawVenueFunding {
   venue: string;
   symbol: string;
   fundingRate: number;
+  /** 取得元が返した生の funding 値(正規化前・未加工)。3資産が本当にソース段階で同一かを後から判別するため。 */
+  fundingRateRaw: string | number;
   fundingIntervalHours: number;
   markPrice: number | null;
   spotPrice: number | null;
@@ -34,7 +36,9 @@ interface HlCtx {
 
 function fromFixture(symbols: string[]): RawVenueFunding[] {
   const raw = JSON.parse(readFileSync(resolve(FIXTURE_DIR, "ofn", "hyperliquid.json"), "utf8")) as RawVenueFunding[];
-  return raw.filter((r) => symbols.includes(r.symbol));
+  return raw
+    .filter((r) => symbols.includes(r.symbol))
+    .map((r) => ({ ...r, fundingRateRaw: r.fundingRateRaw ?? r.fundingRate }));
 }
 
 export async function collectHyperliquid(symbols: string[], offline = false): Promise<RawVenueFunding[]> {
@@ -60,6 +64,8 @@ export async function collectHyperliquid(symbols: string[], offline = false): Pr
         venue: "hyperliquid",
         symbol: name,
         fundingRate: Number(ctx.funding),
+        // ソースの生値(文字列)をそのまま保持。捏造・補正しない。
+        fundingRateRaw: ctx.funding,
         fundingIntervalHours: 1,
         markPrice: Number.isFinite(mark) ? mark : null,
         spotPrice: Number.isFinite(oracle) ? oracle : null,

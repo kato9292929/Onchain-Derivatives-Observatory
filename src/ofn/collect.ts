@@ -44,6 +44,7 @@ function finalize(raw: RawVenueFunding[]): FundingObservation[] {
       venueKind,
       symbol: r.symbol,
       fundingRate: r.fundingRate,
+      fundingRateRaw: r.fundingRateRaw,
       fundingIntervalHours: r.fundingIntervalHours,
       fundingApy,
       markPrice: r.markPrice,

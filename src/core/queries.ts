@@ -86,6 +86,7 @@ export function premiumCaptureHistory() {
         strategy: o.strategy,
         instrument: o.instrument,
         captureRate: o.captureRate,
+        receiptSource: o.receiptSource,
         lowLiquidity: o.lowLiquidity,
       })),
     })),
