@@ -6,6 +6,7 @@ import { x402Gate, loadGateConfig, selectVerifier } from "../core/x402.js";
 import { log } from "../core/logger.js";
 import { getIdentity } from "../scoring/identity.js";
 import { scoreboard } from "../scoring/grade.js";
+import { handleMcpHttp } from "../mcp/http.js";
 import {
   fundingNowcastCurrent,
   fundingNowcastHistory,
@@ -35,6 +36,7 @@ export function buildApp() {
       payment: { protocol: "x402", network: "base", asset: "USDC", priceUsdc: gateCfg.priceUsdc, payTo: gateCfg.payTo },
       identity: getIdentity(),
       scoreboard: scoreboard(),
+      mcp: process.env.ODO_MCP_HTTP !== "false" ? { transport: "streamable-http", path: "/mcp", method: "POST" } : null,
       endpoints: [
         "/funding/nowcast/current",
         "/funding/nowcast/history",
@@ -64,6 +66,15 @@ export function buildApp() {
   paid.get("/premium/capture/leaderboard", (_req, res) => res.json(premiumCaptureLeaderboardQ()));
 
   app.use(paid);
+
+  // MCP 面(Streamable HTTP, ステートレス)。同一観測データの二面配信。
+  // Vercelサーバレスに載る。ODO_MCP_HTTP=false で無効化可。
+  if (process.env.ODO_MCP_HTTP !== "false") {
+    app.post("/mcp", express.json({ limit: "1mb" }), (req, res) => handleMcpHttp(req, res));
+    app.get("/mcp", (req, res) => handleMcpHttp(req, res)); // ステートレスでは 405(セッション非保持)
+    app.delete("/mcp", (req, res) => handleMcpHttp(req, res));
+  }
+
   return app;
 }
 

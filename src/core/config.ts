@@ -1,15 +1,28 @@
 // 設定ファイルローダー。定数は config/*.json に外出ししている。
 
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..", "..");
 
-export const CONFIG_DIR = resolve(ROOT, "config");
-export const DATA_DIR = resolve(ROOT, "data");
-export const FIXTURE_DIR = resolve(ROOT, "fixtures");
+/**
+ * ディレクトリ解決。サーバレス(Vercel)ではバンドル後に __dirname が変わり、
+ * リポジトリ相対パスが外れることがある。env上書き → リポジトリ相対(存在すれば) → cwd 相対 の順で解決。
+ * (Vercelでは vercel.json の includeFiles で config/**・data/** を関数へ同梱し、cwd=プロジェクトルートで拾う。)
+ */
+function resolveDir(envVar: string, name: string): string {
+  const fromEnv = process.env[envVar];
+  if (fromEnv) return resolve(fromEnv);
+  const repoRel = resolve(ROOT, name);
+  if (existsSync(repoRel)) return repoRel;
+  return resolve(process.cwd(), name);
+}
+
+export const CONFIG_DIR = resolveDir("ODO_CONFIG_DIR", "config");
+export const DATA_DIR = resolveDir("ODO_DATA_DIR", "data");
+export const FIXTURE_DIR = resolveDir("ODO_FIXTURE_DIR", "fixtures");
 export const REPO_ROOT = ROOT;
 
 function load<T>(name: string): T {

@@ -43,6 +43,10 @@ jobs:
           ODO_AGENT_ID: ${{ vars.ODO_AGENT_ID }}
         run: npm run score:${{ steps.mode.outputs.mode }}
       - name: Commit data
+        env:
+          # Vercel Deploy Hook URL(未設定ならスキップ)。データ更新のpush後に再デプロイして最新データを配る。
+          # 注: コミットメッセージに [skip ci] は付けない(付けると再デプロイが黙って止まる)。
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -56,6 +60,11 @@ jobs:
           for i in 1 2 3 4 5; do
             if git pull --rebase --autostash origin "$BRANCH" && git push origin "$BRANCH"; then
               echo "pushed on attempt $i"
+              if [ -n "$VERCEL_DEPLOY_HOOK_URL" ]; then
+                curl -sS -X POST "$VERCEL_DEPLOY_HOOK_URL" >/dev/null && echo "vercel redeploy triggered" || echo "vercel hook failed (non-fatal)"
+              else
+                echo "no VERCEL_DEPLOY_HOOK_URL secret; skip redeploy"
+              fi
               exit 0
             fi
             echo "push attempt $i failed, retrying..."

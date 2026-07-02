@@ -143,8 +143,12 @@ facilitator 未設定時は **fail-closed**(支払い提示でも拒否)。
 このコードベースは観測・採点・配信を完結して実装・テスト済み(`npm run e2e` / `npm test`)。
 一方、以下は**ウォレット・資格情報・本番ホストを要する運用者タスク**であり、コードからは実行しない(設計段階として明示):
 
-1. **デプロイ**: API/MCP を本番ホスト(osd/JIN に合わせる)へ。`X402_PAY_TO` 等を環境変数で設定。
-2. **x402 facilitator**: `X402_FACILITATOR_URL` を設定(未設定だと fail-closed)。Base mainnet USDC で per-call 受領。
+1. **Vercel デプロイ(API + MCP)**: サーバレスで配信する。構成は同梱済み(`vercel.json` / `api/index.ts` / `public/`)。
+   - Vercel プロジェクトを作成しリポジトリを接続。**Production ブランチを cron の書き込み先ブランチと一致させる**(現状 `claude/odo-derivatives-observatory-87e880`)。ブランチがずれると更新されない古いデータを配る。
+   - Node 20+。ビルドは `vercel.json` の `buildCommand: npm run build`(TS→`dist/`)。`api/index.ts` が Express アプリ(`buildApp`)を関数として公開し、`rewrites` で全ルートを流す。`config/**`・`data/**` は `includeFiles` で関数に同梱。
+   - **データ鮮度**: cron がデータを push した後に Vercel を再デプロイさせる。**Deploy Hook** を Vercel で作成し、その URL を GitHub の Secrets `VERCEL_DEPLOY_HOOK_URL` に設定(3つの cron が push 成功時に叩く)。未設定でも push はされるが、Production ブランチ一致による自動再デプロイに頼る場合はブランチ設定を必ず合わせること。**cron のコミットに `[skip ci]` は付けない**(付けると再デプロイが黙って止まり古いデータを配る)。
+   - **MCP 面**: `POST /mcp`(Streamable HTTP, ステートレス)。Vercel サーバレスで動作確認済み(常駐不要=Railway 等は不要)。REST と同じく x402 ゲート下(未払い 402 / 支払いで通過)。`ODO_MCP_HTTP=false` で無効化可。
+2. **x402 facilitator / 決済 env(Vercel Project Settings に設定。コミットしない)**: `X402_FACILITATOR_URL`(未設定だと fail-closed)、`X402_PAY_TO`(Base 上の受取アドレス。Circle ウォレット等)、`X402_PRICE_USDC`(1コール価格)。Base mainnet USDC で per-call 受領。設定後、USDC を持つウォレット + x402 クライアントで有償エンドポイントに実決済し **pay→200** を確認(ハッピーパス)。
 3. **ERC-8004 agentId 登録**(配線済・実行は運用者): ODO 専用 ID を IdentityRegistry に新規登録(AAの55560・InvestX とは別)。
    - 配線: 採点層は `ODO_AGENT_ID`(または `data/scoring/identity.json`)から agentId を読み、宣言・採点の全記録に紐づける。未設定なら「未登録」(ダミーは入れない)。
    - 手順: `scripts/register-agent.ts`(`npm run agent:register`)。Circle Developer-Controlled Wallet でウォレットを用意し、ERC-8004 IdentityRegistry へ `newAgent(agentDomain, agentAddress)` を contractExecution(AAと同じ作法)。
@@ -169,8 +173,10 @@ facilitator 未設定時は **fail-closed**(支払い提示でも拒否)。
 - [x] PCM の Derive adapter をライブ実装(IV・実受取とも公開APIで取得可と一次資料で確認)。near-ATM・流動性優先、last_trade優先→board_bidフォールバック、receiptSourceで実測/近似を分離
 - [x] OFN 各観測に生funding値 `fundingRateRaw` を追加(funding同一値の素性を後日判別可能に)
 - [x] 採点層の agentId 配線(env/設定から読み全記録に紐づけ、未設定は未登録・ダミー無し)+ 登録スクリプト `npm run agent:register`
+- [x] Vercel サーバレス構成(`vercel.json` / `api/index.ts` / `public/`)。ローカルで build・/health・/catalog=200・有償=402(fail-closed)・`POST /mcp`(x402下でツール応答)を確認
+- [x] データ鮮度: cron の push 成功時に Vercel Deploy Hook を叩く配線(3ワークフロー)。`[skip ci]` 不使用を確認
 - [ ] Derive `mode=live` の実取得確認・funding素性の数日データ確認(ランナー上で workflow_dispatch、運用者)
-- [ ] 本番デプロイ Online・facilitator 接続・agentId オンチェーン登録(= 上記「運用者チェックリスト」。コードは対応済み、実行は運用者)
+- [ ] Vercel 実デプロイ Online・facilitator 接続・pay→200・cron後の再デプロイ・agentId オンチェーン登録(= 運用者チェックリスト。コードは対応済み、実行は運用者)
 
 ## やらないこと
 
