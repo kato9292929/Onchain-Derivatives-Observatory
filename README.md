@@ -148,7 +148,10 @@ facilitator 未設定時は **fail-closed**(支払い提示でも拒否)。
    - Node 20+。ビルドは `vercel.json` の `buildCommand: npm run build`(TS→`dist/`)。`api/index.ts` が Express アプリ(`buildApp`)を関数として公開し、`rewrites` で全ルートを流す。`config/**`・`data/**` は `includeFiles` で関数に同梱。
    - **データ鮮度**: cron がデータを push した後に Vercel を再デプロイさせる。**Deploy Hook** を Vercel で作成し、その URL を GitHub の Secrets `VERCEL_DEPLOY_HOOK_URL` に設定(3つの cron が push 成功時に叩く)。未設定でも push はされるが、Production ブランチ一致による自動再デプロイに頼る場合はブランチ設定を必ず合わせること。**cron のコミットに `[skip ci]` は付けない**(付けると再デプロイが黙って止まり古いデータを配る)。
    - **MCP 面**: `POST /mcp`(Streamable HTTP, ステートレス)。Vercel サーバレスで動作確認済み(常駐不要=Railway 等は不要)。REST と同じく x402 ゲート下(未払い 402 / 支払いで通過)。`ODO_MCP_HTTP=false` で無効化可。
-2. **x402 facilitator / 決済 env(Vercel Project Settings に設定。コミットしない)**: `X402_FACILITATOR_URL`(未設定だと fail-closed)、`X402_PAY_TO`(Base 上の受取アドレス。Circle ウォレット等)、`X402_PRICE_USDC`(1コール価格)。Base mainnet USDC で per-call 受領。設定後、USDC を持つウォレット + x402 クライアントで有償エンドポイントに実決済し **pay→200** を確認(ハッピーパス)。
+2. **x402 facilitator(CDP)/ 決済 env(Vercel Project Settings に設定。コミットしない)**:
+   - **CDP認証**: `CDP_API_KEY_ID` / `CDP_API_KEY_SECRET`(CDPダッシュボードで x402/facilitator 用に発行)。CDP の verify/settle は認証必須で、この2つから JWT を生成して付与する(`@coinbase/x402` の `createFacilitatorConfig`)。**両方揃うと本番(mode=facilitator-cdp)、揃わないと fail-closed(mode=null)**。認証情報が無いのに認証なしPOSTで素通しはしない。
+   - `X402_PAY_TO`(Base 上の受取アドレス)、`X402_PRICE_USDC`(1コール価格)、任意で `X402_SETTLE`。CDP経路の facilitator URL は CDP 固定URL(`config.url`)を使うため `X402_FACILITATOR_URL` の上書きは不要。
+   - 設定後に **Redeploy**。その後、USDC を持つウォレット + x402 クライアントで有償エンドポイントに実決済し **pay→200**・`X-PAYMENT-RESPONSE` の txHash をオンチェーンで確認(ハッピーパス。実測するまで「課金が動いた」とは言わない)。
 3. **ERC-8004 agentId 登録**(配線済・実行は運用者): ODO 専用 ID を IdentityRegistry に新規登録(AAの55560・InvestX とは別)。
    - 配線: 採点層は `ODO_AGENT_ID`(または `data/scoring/identity.json`)から agentId を読み、宣言・採点の全記録に紐づける。未設定なら「未登録」(ダミーは入れない)。
    - 手順: `scripts/register-agent.ts`(`npm run agent:register`)。Circle Developer-Controlled Wallet でウォレットを用意し、ERC-8004 IdentityRegistry へ `newAgent(agentDomain, agentAddress)` を contractExecution(AAと同じ作法)。

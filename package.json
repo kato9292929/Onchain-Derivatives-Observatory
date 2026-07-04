@@ -23,6 +23,7 @@
     "e2e": "tsx src/cli/e2e.ts"
   },
   "dependencies": {
+    "@coinbase/x402": "2.1.0",
     "@modelcontextprotocol/sdk": "^1.0.4",
     "express": "^4.21.2",
     "zod": "^3.23.8"

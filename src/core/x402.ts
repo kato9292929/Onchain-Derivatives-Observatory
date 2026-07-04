@@ -10,8 +10,17 @@
 // 支払いは X-PAYMENT ヘッダ(base64 JSON)で提示され、facilitator の /verify・/settle で確定する。
 
 import type { Request, Response, NextFunction } from "express";
+import { createFacilitatorConfig } from "@coinbase/x402";
 import { httpJson } from "./http.js";
 import { log } from "./logger.js";
+
+// CDP facilitator の verify/settle は CDP 認証(CDP_API_KEY_ID/SECRET から生成する JWT)を必須にする。
+// createAuthHeaders() は verify 用・settle 用それぞれの認証ヘッダを返す(JWTは CDP の host/path に束縛)。
+type CreateAuthHeaders = () => Promise<{
+  verify: Record<string, string>;
+  settle: Record<string, string>;
+  supported?: Record<string, string>;
+}>;
 
 /** Base mainnet USDC */
 export const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
@@ -46,15 +55,32 @@ export interface Verifier {
   settle(paymentB64: string, req: PaymentRequirements): Promise<SettleResult>;
 }
 
-/** facilitator(外部)に検証・決済を委譲。本番経路。 */
+/**
+ * facilitator(外部)に検証・決済を委譲。本番経路。
+ * CDP facilitator を使う場合は createAuthHeaders を渡し、verify/settle の POST に CDP 認証ヘッダを載せる。
+ * 認証ヘッダ生成に失敗した場合は素通しせず reject(fail-closed)する。
+ * verify 失敗は facilitator が「HTTP200 + isValid:false」で返す。認証エラー(401/403)は httpJson が throw し、
+ * catch して isValid:false に落ちる(いずれも fail-closed)。
+ */
 export class FacilitatorVerifier implements Verifier {
-  constructor(private baseUrl: string) {}
+  constructor(
+    private baseUrl: string,
+    private createAuthHeaders?: CreateAuthHeaders,
+  ) {}
+
+  private async authHeaders(kind: "verify" | "settle"): Promise<Record<string, string>> {
+    if (!this.createAuthHeaders) return {};
+    const h = await this.createAuthHeaders();
+    return h[kind] ?? {};
+  }
+
   async verify(paymentB64: string, req: PaymentRequirements): Promise<VerifyResult> {
     try {
       const payload = JSON.parse(Buffer.from(paymentB64, "base64").toString("utf8"));
+      const headers = await this.authHeaders("verify");
       const r = await httpJson<{ isValid: boolean; payer?: string; invalidReason?: string }>(
         `${this.baseUrl}/verify`,
-        { method: "POST", body: { x402Version: 1, paymentPayload: payload, paymentRequirements: req } },
+        { method: "POST", headers, body: { x402Version: 1, paymentPayload: payload, paymentRequirements: req } },
       );
       return { isValid: !!r.isValid, payer: r.payer, reason: r.invalidReason };
     } catch (err) {
@@ -64,9 +90,10 @@ export class FacilitatorVerifier implements Verifier {
   async settle(paymentB64: string, req: PaymentRequirements): Promise<SettleResult> {
     try {
       const payload = JSON.parse(Buffer.from(paymentB64, "base64").toString("utf8"));
+      const headers = await this.authHeaders("settle");
       const r = await httpJson<{ success: boolean; transaction?: string; errorReason?: string }>(
         `${this.baseUrl}/settle`,
-        { method: "POST", body: { x402Version: 1, paymentPayload: payload, paymentRequirements: req } },
+        { method: "POST", headers, body: { x402Version: 1, paymentPayload: payload, paymentRequirements: req } },
       );
       return { success: !!r.success, txHash: r.transaction, reason: r.errorReason };
     } catch (err) {
@@ -86,21 +113,43 @@ export class MockVerifier implements Verifier {
   }
 }
 
-/** fail-closed: facilitator未設定。支払いが来ても検証手段が無いので常に拒否。 */
+/** fail-closed: 認証付きfacilitatorを構成できない。支払いが来ても検証手段が無いので常に拒否。 */
 export class NullVerifier implements Verifier {
   async verify(): Promise<VerifyResult> {
-    return { isValid: false, reason: "no facilitator configured (X402_FACILITATOR_URL unset): fail-closed" };
+    return { isValid: false, reason: "no authenticated facilitator (CDP_API_KEY_ID/SECRET unset): fail-closed" };
   }
   async settle(): Promise<SettleResult> {
-    return { success: false, reason: "no facilitator configured: fail-closed" };
+    return { success: false, reason: "no authenticated facilitator: fail-closed" };
   }
 }
 
+/**
+ * verifier 選定。fail-closed が最優先。
+ *  - X402_MODE=mock: 開発専用モック(本番禁止)。
+ *  - CDP資格情報(CDP_API_KEY_ID かつ CDP_API_KEY_SECRET)あり: CDP認証付き facilitator。
+ *      base URL は CDP config.url に固定(JWTが CDP host/path に束縛されるため。X402_FACILITATOR_URL では上書きしない)。
+ *  - それ以外(CDP資格情報なし): NullVerifier(fail-closed)。認証情報が無いのに「認証なしPOST」へは落とさない。
+ */
 export function selectVerifier(): { verifier: Verifier; mode: string } {
-  const mode = process.env.X402_MODE || (process.env.X402_FACILITATOR_URL ? "facilitator" : "null");
-  if (mode === "mock") return { verifier: new MockVerifier(), mode };
-  if (process.env.X402_FACILITATOR_URL)
-    return { verifier: new FacilitatorVerifier(process.env.X402_FACILITATOR_URL), mode: "facilitator" };
+  if (process.env.X402_MODE === "mock") return { verifier: new MockVerifier(), mode: "mock" };
+
+  const id = process.env.CDP_API_KEY_ID;
+  const secret = process.env.CDP_API_KEY_SECRET;
+  if (id && secret) {
+    const cfg = createFacilitatorConfig(id, secret);
+    const baseUrl = cfg.url ?? "https://api.cdp.coinbase.com/platform/v2/x402";
+    return {
+      verifier: new FacilitatorVerifier(baseUrl, cfg.createAuthHeaders as CreateAuthHeaders | undefined),
+      mode: "facilitator-cdp",
+    };
+  }
+
+  if (process.env.X402_FACILITATOR_URL) {
+    // CDP資格情報が無いのに facilitator URL だけ設定されている状態。認証なしPOSTには落とさず fail-closed。
+    log.warn(
+      "x402: X402_FACILITATOR_URL は設定されているが CDP_API_KEY_ID/SECRET が無い。認証付きverifyができないため fail-closed(NullVerifier)にする。CDP資格情報を設定すること。",
+    );
+  }
   return { verifier: new NullVerifier(), mode: "null" };
 }
 
