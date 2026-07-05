@@ -26,7 +26,7 @@ test("無償アクセスは402で弾かれ、accepts(支払い要件)を返す",
     assert.equal(res.status, 402);
     const body = (await res.json()) as { x402Version: number; accepts: { network: string; asset: string }[] };
     assert.equal(body.x402Version, 1);
-    assert.equal(body.accepts[0]!.network, "base");
+    assert.equal(body.accepts[0]!.network, "eip155:8453"); // CAIP-2 (Base mainnet)。AA/CDPが払える表記
     assert.match(body.accepts[0]!.asset, /^0x833589/); // USDC on Base
   } finally {
     close();
@@ -36,7 +36,7 @@ test("無償アクセスは402で弾かれ、accepts(支払い要件)を返す",
 test("X-PAYMENT 提示で通過する(mock検証)", async () => {
   const { url, close } = await listen();
   try {
-    const payment = Buffer.from(JSON.stringify({ scheme: "exact", network: "base" })).toString("base64");
+    const payment = Buffer.from(JSON.stringify({ scheme: "exact", network: "eip155:8453" })).toString("base64");
     const res = await fetch(`${url}/funding/nowcast/current`, { headers: { "X-PAYMENT": payment } });
     assert.equal(res.status, 200);
   } finally {

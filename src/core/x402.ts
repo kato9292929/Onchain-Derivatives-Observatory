@@ -26,9 +26,14 @@ type CreateAuthHeaders = () => Promise<{
 export const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 export const USDC_DECIMALS = 6;
 
+// network 表記は CAIP-2(eip155:CHAIN_ID)。Base mainnet = eip155:8453。
+// v2 の x402 スタック(@x402/core、AAの payload 生成、CDP facilitator)が期待する形式。
+// 旧 v1 の "base" は payload 生成で `Unsupported network format: base (expected eip155:CHAIN_ID)` になり払えない。
+export const NETWORK_BASE_MAINNET = "eip155:8453" as const;
+
 export interface PaymentRequirements {
   scheme: "exact";
-  network: "base";
+  network: typeof NETWORK_BASE_MAINNET;
   maxAmountRequired: string; // atomic units (USDC=6桁)
   resource: string;
   description: string;
@@ -179,7 +184,7 @@ function buildRequirements(req: Request, cfg: GateConfig): PaymentRequirements {
   const host = req.headers.host || "localhost";
   return {
     scheme: "exact",
-    network: "base",
+    network: NETWORK_BASE_MAINNET,
     maxAmountRequired: toAtomic(cfg.priceUsdc),
     resource: `${proto}://${host}${req.originalUrl}`,
     description: `ODO per-call access to ${req.path}`,

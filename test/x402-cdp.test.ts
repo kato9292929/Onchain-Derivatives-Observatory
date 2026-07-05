@@ -6,7 +6,7 @@ import { selectVerifier, NullVerifier, FacilitatorVerifier, type PaymentRequirem
 
 const REQ: PaymentRequirements = {
   scheme: "exact",
-  network: "base",
+  network: "eip155:8453",
   maxAmountRequired: "10000",
   resource: "http://x/test",
   description: "t",
@@ -16,7 +16,7 @@ const REQ: PaymentRequirements = {
   asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   extra: { name: "USDC", version: "2" },
 };
-const PAY = Buffer.from(JSON.stringify({ scheme: "exact", network: "base" })).toString("base64");
+const PAY = Buffer.from(JSON.stringify({ scheme: "exact", network: "eip155:8453" })).toString("base64");
 
 /** リクエストの Authorization ヘッダを記録し、指定ボディを返す簡易 facilitator。 */
 function fakeFacilitator(body: unknown): Promise<{ url: string; seen: { auth?: string }; close: () => void }> {

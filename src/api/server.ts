@@ -2,7 +2,7 @@
 
 import express from "express";
 import type { Request, Response } from "express";
-import { x402Gate, loadGateConfig, selectVerifier } from "../core/x402.js";
+import { x402Gate, loadGateConfig, selectVerifier, NETWORK_BASE_MAINNET } from "../core/x402.js";
 import { log } from "../core/logger.js";
 import { getIdentity } from "../scoring/identity.js";
 import { scoreboard } from "../scoring/grade.js";
@@ -33,7 +33,7 @@ export function buildApp() {
   app.get("/catalog", (_req: Request, res: Response) => {
     res.json({
       name: "ODO — Onchain Derivatives Observatory",
-      payment: { protocol: "x402", network: "base", asset: "USDC", priceUsdc: gateCfg.priceUsdc, payTo: gateCfg.payTo },
+      payment: { protocol: "x402", network: NETWORK_BASE_MAINNET, asset: "USDC", priceUsdc: gateCfg.priceUsdc, payTo: gateCfg.payTo },
       identity: getIdentity(),
       scoreboard: scoreboard(),
       mcp: process.env.ODO_MCP_HTTP !== "false" ? { transport: "streamable-http", path: "/mcp", method: "POST" } : null,
