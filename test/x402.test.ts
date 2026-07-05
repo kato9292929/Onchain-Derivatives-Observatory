@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { AddressInfo } from "node:net";
+// AAクライアントが実際に使う @x402/core の decode 関数(一次ソース)で ODO の 402 を照合する。
+import { decodePaymentRequiredHeader } from "@x402/core/http";
 
 // MOCKモードでゲートを検証(検証手段が無いと支払い経路をローカルで通せないため)。
 process.env.X402_MODE = "mock";
@@ -43,7 +45,44 @@ test("無償アクセスは402で弾かれ、accepts(支払い要件)を返す",
   }
 });
 
-test("X-PAYMENT 提示で通過する(mock検証)", async () => {
+test("402 は PAYMENT-REQUIRED ヘッダで渡り、@x402/core の decode が受理する(v2ワイヤ)", async () => {
+  const { url, close } = await listen();
+  try {
+    const res = await fetch(`${url}/funding/nowcast/current`);
+    assert.equal(res.status, 402);
+    const header = res.headers.get("payment-required");
+    assert.ok(header, "PAYMENT-REQUIRED ヘッダが必要(v2クライアントは本文ではなくこのヘッダを読む)");
+    // AAクライアントと同一の decode 関数で復号(base64regex + JSON.parse)
+    const decoded = decodePaymentRequiredHeader(header!) as {
+      x402Version: number;
+      resource: { url: string };
+      accepts: { scheme: string; network: string; amount: string; asset: string; payTo: string; maxTimeoutSeconds: number }[];
+    };
+    assert.equal(decoded.x402Version, 2);
+    assert.ok(typeof decoded.resource.url === "string" && decoded.resource.url.length > 0);
+    const a = decoded.accepts[0]!;
+    assert.equal(a.scheme, "exact");
+    assert.ok(a.network.includes(":")); // CAIP-2
+    assert.equal(a.network, "eip155:8453");
+    assert.equal(a.amount, "10000");
+    assert.ok(a.asset && a.payTo && a.maxTimeoutSeconds > 0);
+  } finally {
+    close();
+  }
+});
+
+test("支払いは PAYMENT-SIGNATURE ヘッダ(v2)で受理される(mock検証)", async () => {
+  const { url, close } = await listen();
+  try {
+    const payment = Buffer.from(JSON.stringify({ x402Version: 2, scheme: "exact", network: "eip155:8453" })).toString("base64");
+    const res = await fetch(`${url}/funding/nowcast/current`, { headers: { "PAYMENT-SIGNATURE": payment } });
+    assert.equal(res.status, 200);
+  } finally {
+    close();
+  }
+});
+
+test("X-PAYMENT 提示でも後方互換で通過する(v1/mock検証)", async () => {
   const { url, close } = await listen();
   try {
     const payment = Buffer.from(JSON.stringify({ scheme: "exact", network: "eip155:8453" })).toString("base64");

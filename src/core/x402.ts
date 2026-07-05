@@ -233,25 +233,42 @@ function build402(req: Request, cfg: GateConfig, error: string): PaymentRequired
   };
 }
 
+function b64(obj: unknown): string {
+  return Buffer.from(JSON.stringify(obj)).toString("base64");
+}
+
 /**
- * Express ミドルウェア。x402ゲート。
- * 無償(X-PAYMENTなし)→ 402 + accepts。支払いあり→ facilitatorで検証、必要なら決済。
+ * v2 の 402 を返す。@x402/core v2 クライアントは 402 本文ではなく PAYMENT-REQUIRED ヘッダ(base64 JSON)
+ * から PaymentRequired を読む(本文は x402Version===1 のときのみ使う)。よってヘッダに載せる。
+ * 本文にも同じ内容を入れる(人間の確認・v1互換)。
+ */
+function send402(res: Response, req: Request, cfg: GateConfig, error: string): void {
+  const body = build402(req, cfg, error);
+  res.setHeader("PAYMENT-REQUIRED", b64(body));
+  res.status(402).json(body);
+}
+
+/**
+ * Express ミドルウェア。x402ゲート(v2)。fail-closed 維持。
+ * 支払いは v2 クライアントが PAYMENT-SIGNATURE ヘッダで送る(v1 は X-PAYMENT)。両対応で読む。
  */
 export function x402Gate(cfg: GateConfig) {
   return async function gate(req: Request, res: Response, next: NextFunction) {
     const requirements = buildRequirements(cfg);
-    const payment = req.headers["x-payment"] as string | undefined;
+    // v2: PAYMENT-SIGNATURE / v1後方互換: X-PAYMENT
+    const payment =
+      (req.headers["payment-signature"] as string | undefined) ?? (req.headers["x-payment"] as string | undefined);
 
     if (!payment) {
       log.info("x402 402 (no payment)", { path: req.path });
-      res.status(402).json(build402(req, cfg, "X-PAYMENT header is required"));
+      send402(res, req, cfg, "payment required: PAYMENT-SIGNATURE header is missing");
       return;
     }
 
     const v = await cfg.verifier.verify(payment, requirements);
     if (!v.isValid) {
       log.info("x402 402 (invalid payment)", { path: req.path, reason: v.reason });
-      res.status(402).json(build402(req, cfg, v.reason || "invalid payment"));
+      send402(res, req, cfg, v.reason || "invalid payment");
       return;
     }
 
@@ -259,13 +276,18 @@ export function x402Gate(cfg: GateConfig) {
       const s = await cfg.verifier.settle(payment, requirements);
       if (!s.success) {
         log.warn("x402 settle failed", { path: req.path, reason: s.reason });
-        res.status(402).json(build402(req, cfg, s.reason || "settlement failed"));
+        send402(res, req, cfg, s.reason || "settlement failed");
         return;
       }
-      res.setHeader(
-        "X-PAYMENT-RESPONSE",
-        Buffer.from(JSON.stringify({ success: true, txHash: s.txHash, payer: v.payer })).toString("base64"),
-      );
+      // v2 settle 応答: PAYMENT-RESPONSE(settleResponseSchema は transaction/network 必須)。X-PAYMENT-RESPONSE も併置。
+      const settleResponse = {
+        success: true,
+        transaction: s.txHash ?? "",
+        network: NETWORK_BASE_MAINNET,
+        payer: v.payer,
+      };
+      res.setHeader("PAYMENT-RESPONSE", b64(settleResponse));
+      res.setHeader("X-PAYMENT-RESPONSE", b64(settleResponse));
     }
 
     (req as Request & { x402Payer?: string }).x402Payer = v.payer;
