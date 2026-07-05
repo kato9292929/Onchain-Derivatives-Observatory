@@ -24,10 +24,20 @@ test("無償アクセスは402で弾かれ、accepts(支払い要件)を返す",
   try {
     const res = await fetch(`${url}/funding/nowcast/current`);
     assert.equal(res.status, 402);
-    const body = (await res.json()) as { x402Version: number; accepts: { network: string; asset: string }[] };
-    assert.equal(body.x402Version, 1);
-    assert.equal(body.accepts[0]!.network, "eip155:8453"); // CAIP-2 (Base mainnet)。AA/CDPが払える表記
-    assert.match(body.accepts[0]!.asset, /^0x833589/); // USDC on Base
+    const body = (await res.json()) as {
+      x402Version: number;
+      resource: { url: string };
+      accepts: { scheme: string; network: string; asset: string; amount: string; payTo: string; maxAmountRequired?: string }[];
+    };
+    // v2 に統一: x402Version=2 / network=eip155:8453 / 金額は amount / v1由来フィールドは混ざらない
+    assert.equal(body.x402Version, 2);
+    assert.ok(body.resource && typeof body.resource.url === "string"); // resource はトップレベル(v2)
+    const a = body.accepts[0]!;
+    assert.equal(a.scheme, "exact");
+    assert.equal(a.network, "eip155:8453"); // CAIP-2 (Base mainnet)。AA/CDPが払える表記
+    assert.equal(a.amount, "10000"); // 0.01 USDC(base units)。v1 maxAmountRequired ではない
+    assert.equal(a.maxAmountRequired, undefined); // v1由来フィールドが残っていないこと
+    assert.match(a.asset, /^0x833589/); // USDC on Base
   } finally {
     close();
   }

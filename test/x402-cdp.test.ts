@@ -7,13 +7,10 @@ import { selectVerifier, NullVerifier, FacilitatorVerifier, type PaymentRequirem
 const REQ: PaymentRequirements = {
   scheme: "exact",
   network: "eip155:8453",
-  maxAmountRequired: "10000",
-  resource: "http://x/test",
-  description: "t",
-  mimeType: "application/json",
+  asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  amount: "10000",
   payTo: "0x1111111111111111111111111111111111111111",
   maxTimeoutSeconds: 60,
-  asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   extra: { name: "USDC", version: "2" },
 };
 const PAY = Buffer.from(JSON.stringify({ scheme: "exact", network: "eip155:8453" })).toString("base64");

@@ -31,17 +31,37 @@ export const USDC_DECIMALS = 6;
 // 旧 v1 の "base" は payload 生成で `Unsupported network format: base (expected eip155:CHAIN_ID)` になり払えない。
 export const NETWORK_BASE_MAINNET = "eip155:8453" as const;
 
+// x402 プロトコルバージョン。ODOの周辺スタック(CDP facilitator=@coinbase/x402@2、AAクライアント=@x402/*@2)
+// は全て v2。v1 との混在(version:1 + eip155 network)は AA の登録に一致せず払えないため、v2 に統一する。
+export const X402_VERSION = 2 as const;
+
+// v2 PaymentRequirements(@x402/core の実型に一致):
+//   { scheme, network, asset, amount, payTo, maxTimeoutSeconds, extra }
+// v1 の maxAmountRequired/resource/description/mimeType/outputSchema は accepts から外れ、
+// 金額は amount(base units 文字列)。resource は 402 エンベロープのトップレベルへ移動。
 export interface PaymentRequirements {
   scheme: "exact";
   network: typeof NETWORK_BASE_MAINNET;
-  maxAmountRequired: string; // atomic units (USDC=6桁)
-  resource: string;
-  description: string;
-  mimeType: string;
+  asset: string;
+  amount: string; // base units(USDC=6桁)。0.01 USDC = "10000"
   payTo: string;
   maxTimeoutSeconds: number;
-  asset: string;
-  extra: { name: string; version: string };
+  extra: Record<string, unknown>;
+}
+
+/** v2 ResourceInfo(402 エンベロープのトップレベル resource)。 */
+export interface ResourceInfo {
+  url: string;
+  description?: string;
+  mimeType?: string;
+}
+
+/** v2 PaymentRequired(402 本文)。 */
+export interface PaymentRequired {
+  x402Version: number;
+  error?: string;
+  resource: ResourceInfo;
+  accepts: PaymentRequirements[];
 }
 
 export interface VerifyResult {
@@ -85,7 +105,7 @@ export class FacilitatorVerifier implements Verifier {
       const headers = await this.authHeaders("verify");
       const r = await httpJson<{ isValid: boolean; payer?: string; invalidReason?: string }>(
         `${this.baseUrl}/verify`,
-        { method: "POST", headers, body: { x402Version: 1, paymentPayload: payload, paymentRequirements: req } },
+        { method: "POST", headers, body: { x402Version: X402_VERSION, paymentPayload: payload, paymentRequirements: req } },
       );
       return { isValid: !!r.isValid, payer: r.payer, reason: r.invalidReason };
     } catch (err) {
@@ -98,7 +118,7 @@ export class FacilitatorVerifier implements Verifier {
       const headers = await this.authHeaders("settle");
       const r = await httpJson<{ success: boolean; transaction?: string; errorReason?: string }>(
         `${this.baseUrl}/settle`,
-        { method: "POST", headers, body: { x402Version: 1, paymentPayload: payload, paymentRequirements: req } },
+        { method: "POST", headers, body: { x402Version: X402_VERSION, paymentPayload: payload, paymentRequirements: req } },
       );
       return { success: !!r.success, txHash: r.transaction, reason: r.errorReason };
     } catch (err) {
@@ -179,20 +199,37 @@ function toAtomic(usdc: number): string {
   return BigInt(Math.round(usdc * 10 ** USDC_DECIMALS)).toString();
 }
 
-function buildRequirements(req: Request, cfg: GateConfig): PaymentRequirements {
-  const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol;
-  const host = req.headers.host || "localhost";
+/** v2 accepts 要素(PaymentRequirements)。金額は amount(base units)。 */
+function buildRequirements(cfg: GateConfig): PaymentRequirements {
   return {
     scheme: "exact",
     network: NETWORK_BASE_MAINNET,
-    maxAmountRequired: toAtomic(cfg.priceUsdc),
-    resource: `${proto}://${host}${req.originalUrl}`,
-    description: `ODO per-call access to ${req.path}`,
-    mimeType: "application/json",
+    asset: USDC_BASE,
+    amount: toAtomic(cfg.priceUsdc),
     payTo: cfg.payTo,
     maxTimeoutSeconds: 60,
-    asset: USDC_BASE,
     extra: { name: "USDC", version: "2" },
+  };
+}
+
+/** v2 402 エンベロープのトップレベル resource。 */
+function buildResourceInfo(req: Request): ResourceInfo {
+  const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol;
+  const host = req.headers.host || "localhost";
+  return {
+    url: `${proto}://${host}${req.originalUrl}`,
+    description: `ODO per-call access to ${req.path}`,
+    mimeType: "application/json",
+  };
+}
+
+/** v2 PaymentRequired(402本文)を組み立てる。3つの拒否分岐で共通利用。 */
+function build402(req: Request, cfg: GateConfig, error: string): PaymentRequired {
+  return {
+    x402Version: X402_VERSION,
+    error,
+    resource: buildResourceInfo(req),
+    accepts: [buildRequirements(cfg)],
   };
 }
 
@@ -202,27 +239,19 @@ function buildRequirements(req: Request, cfg: GateConfig): PaymentRequirements {
  */
 export function x402Gate(cfg: GateConfig) {
   return async function gate(req: Request, res: Response, next: NextFunction) {
-    const requirements = buildRequirements(req, cfg);
+    const requirements = buildRequirements(cfg);
     const payment = req.headers["x-payment"] as string | undefined;
 
     if (!payment) {
       log.info("x402 402 (no payment)", { path: req.path });
-      res.status(402).json({
-        x402Version: 1,
-        error: "X-PAYMENT header is required",
-        accepts: [requirements],
-      });
+      res.status(402).json(build402(req, cfg, "X-PAYMENT header is required"));
       return;
     }
 
     const v = await cfg.verifier.verify(payment, requirements);
     if (!v.isValid) {
       log.info("x402 402 (invalid payment)", { path: req.path, reason: v.reason });
-      res.status(402).json({
-        x402Version: 1,
-        error: v.reason || "invalid payment",
-        accepts: [requirements],
-      });
+      res.status(402).json(build402(req, cfg, v.reason || "invalid payment"));
       return;
     }
 
@@ -230,7 +259,7 @@ export function x402Gate(cfg: GateConfig) {
       const s = await cfg.verifier.settle(payment, requirements);
       if (!s.success) {
         log.warn("x402 settle failed", { path: req.path, reason: s.reason });
-        res.status(402).json({ x402Version: 1, error: s.reason || "settlement failed", accepts: [requirements] });
+        res.status(402).json(build402(req, cfg, s.reason || "settlement failed"));
         return;
       }
       res.setHeader(
