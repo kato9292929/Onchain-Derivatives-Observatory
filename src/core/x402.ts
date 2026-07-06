@@ -103,28 +103,48 @@ export class FacilitatorVerifier implements Verifier {
     try {
       const payload = JSON.parse(Buffer.from(paymentB64, "base64").toString("utf8"));
       const headers = await this.authHeaders("verify");
+      logFacilitatorRequest("verify", `${this.baseUrl}/verify`, payload, req);
       const r = await httpJson<{ isValid: boolean; payer?: string; invalidReason?: string }>(
         `${this.baseUrl}/verify`,
         { method: "POST", headers, body: { x402Version: X402_VERSION, paymentPayload: payload, paymentRequirements: req } },
       );
       return { isValid: !!r.isValid, payer: r.payer, reason: r.invalidReason };
     } catch (err) {
-      return { isValid: false, reason: `facilitator verify error: ${String(err)}` };
+      // CDPが返した非2xxの body(どのフィールドが不正か)を捨てずに reason へ載せる(切り詰め)。認証ヘッダは含まない。
+      log.warn("x402 verify facilitator error", { err: facilitatorErrText(err) });
+      return { isValid: false, reason: `facilitator verify error: ${facilitatorErrText(err)}` };
     }
   }
   async settle(paymentB64: string, req: PaymentRequirements): Promise<SettleResult> {
     try {
       const payload = JSON.parse(Buffer.from(paymentB64, "base64").toString("utf8"));
       const headers = await this.authHeaders("settle");
+      logFacilitatorRequest("settle", `${this.baseUrl}/settle`, payload, req);
       const r = await httpJson<{ success: boolean; transaction?: string; errorReason?: string }>(
         `${this.baseUrl}/settle`,
         { method: "POST", headers, body: { x402Version: X402_VERSION, paymentPayload: payload, paymentRequirements: req } },
       );
       return { success: !!r.success, txHash: r.transaction, reason: r.errorReason };
     } catch (err) {
-      return { success: false, reason: `facilitator settle error: ${String(err)}` };
+      log.warn("x402 settle facilitator error", { err: facilitatorErrText(err) });
+      return { success: false, reason: `facilitator settle error: ${facilitatorErrText(err)}` };
     }
   }
+}
+
+/** CDPエラー本文を含むエラー文字列を切り詰めて返す(402 error に載せる用)。認証情報は元々含まれない。 */
+function facilitatorErrText(err: unknown): string {
+  const s = String((err as Error)?.message ?? err);
+  return s.length > 800 ? s.slice(0, 800) + "…(truncated)" : s;
+}
+
+/** X402_DEBUG 有効時のみ、facilitator へ送る body を可視化する。認証ヘッダ(Authorization/JWT)は絶対に出さない。 */
+function logFacilitatorRequest(kind: "verify" | "settle", url: string, paymentPayload: unknown, req: PaymentRequirements): void {
+  if (process.env.X402_DEBUG !== "1" && process.env.X402_DEBUG !== "true") return;
+  log.info(`x402 facilitator ${kind} request (debug)`, {
+    url,
+    body: { x402Version: X402_VERSION, paymentPayload, paymentRequirements: req },
+  });
 }
 
 /** 開発専用モック。X402_MODE=mock のときだけ使う。検証は常に通す(本番では絶対に使わない)。 */

@@ -15,14 +15,18 @@ const REQ: PaymentRequirements = {
 };
 const PAY = Buffer.from(JSON.stringify({ scheme: "exact", network: "eip155:8453" })).toString("base64");
 
-/** リクエストの Authorization ヘッダを記録し、指定ボディを返す簡易 facilitator。 */
-function fakeFacilitator(body: unknown): Promise<{ url: string; seen: { auth?: string }; close: () => void }> {
+/** リクエストの Authorization ヘッダを記録し、指定ボディ/ステータスを返す簡易 facilitator。 */
+function fakeFacilitator(
+  body: unknown,
+  status = 200,
+): Promise<{ url: string; seen: { auth?: string }; close: () => void }> {
   const seen: { auth?: string } = {};
   return new Promise((resolve) => {
     const srv: Server = createServer((req, res) => {
       if (req.url?.endsWith("/verify") || req.url?.endsWith("/settle")) seen.auth = req.headers["authorization"] as string;
+      res.statusCode = status;
       res.setHeader("content-type", "application/json");
-      res.end(JSON.stringify(body));
+      res.end(typeof body === "string" ? body : JSON.stringify(body));
     });
     srv.listen(0, () => {
       const { port } = srv.address() as AddressInfo;
@@ -94,6 +98,25 @@ test("FacilitatorVerifier: 認証を付けても facilitator が isValid:false(H
     const r = await v.verify(PAY, REQ);
     assert.equal(r.isValid, false);
     assert.equal(r.reason, "insufficient_funds");
+  } finally {
+    fac.close();
+  }
+});
+
+test("FacilitatorVerifier: facilitator が非2xx(400)なら、そのエラーbodyを reason に載せる(診断)", async () => {
+  const cdpBody = JSON.stringify({ errorType: "invalid_request", errorMessage: "paymentPayload.payload.authorization is required" });
+  const fac = await fakeFacilitator(cdpBody, 400);
+  try {
+    const v = new FacilitatorVerifier(fac.url, async () => ({
+      verify: { Authorization: "Bearer X" },
+      settle: { Authorization: "Bearer X" },
+      supported: {},
+    }));
+    const r = await v.verify(PAY, REQ);
+    assert.equal(r.isValid, false); // fail-closed
+    assert.match(r.reason!, /HTTP 400/);
+    assert.match(r.reason!, /paymentPayload\.payload\.authorization is required/); // CDPの不満が捨てられていない
+    assert.doesNotMatch(r.reason!, /Bearer/); // 認証ヘッダは reason に混入しない
   } finally {
     fac.close();
   }
