@@ -228,7 +228,10 @@ function buildRequirements(cfg: GateConfig): PaymentRequirements {
     amount: toAtomic(cfg.priceUsdc),
     payTo: cfg.payTo,
     maxTimeoutSeconds: 60,
-    extra: { name: "USDC", version: "2" },
+    // EIP-712 domain(transferWithAuthorization の署名検証に使う)。Base ネイティブUSDC(0x833589...)の
+    // domain name は "USD Coin"(symbol の "USDC" ではない)、version は "2"。ここが誤ると payer の署名が
+    // 復元できず CDP verify で invalid_payload/execution reverted になる。
+    extra: { name: "USD Coin", version: "2" },
   };
 }
 

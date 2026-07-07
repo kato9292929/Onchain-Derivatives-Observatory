@@ -56,7 +56,15 @@ test("402 は PAYMENT-REQUIRED ヘッダで渡り、@x402/core の decode が受
     const decoded = decodePaymentRequiredHeader(header!) as {
       x402Version: number;
       resource: { url: string };
-      accepts: { scheme: string; network: string; amount: string; asset: string; payTo: string; maxTimeoutSeconds: number }[];
+      accepts: {
+        scheme: string;
+        network: string;
+        amount: string;
+        asset: string;
+        payTo: string;
+        maxTimeoutSeconds: number;
+        extra: { name: string; version: string };
+      }[];
     };
     assert.equal(decoded.x402Version, 2);
     assert.ok(typeof decoded.resource.url === "string" && decoded.resource.url.length > 0);
@@ -66,6 +74,9 @@ test("402 は PAYMENT-REQUIRED ヘッダで渡り、@x402/core の decode が受
     assert.equal(a.network, "eip155:8453");
     assert.equal(a.amount, "10000");
     assert.ok(a.asset && a.payTo && a.maxTimeoutSeconds > 0);
+    // EIP-712 domain: Base USDC の domain name は "USD Coin"(symbol "USDC" ではない)。誤ると署名が復元不能。
+    assert.equal(a.extra.name, "USD Coin");
+    assert.equal(a.extra.version, "2");
   } finally {
     close();
   }
