@@ -1,0 +1,71 @@
+{
+  "date": "2026-08-07",
+  "generatedAt": "2026-08-07T03:12:37.347Z",
+  "observations": [
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "BTC",
+      "fundingRate": 0.000002615,
+      "fundingRateRaw": "0.000002615",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.022907399999999998,
+      "markPrice": 64322,
+      "spotPrice": 64352.9,
+      "basis": -0.0004801648410561743,
+      "basisApy": null,
+      "openInterestUsd": 2263295956.517144,
+      "netCarryApy": 0.022307399999999998,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "ETH",
+      "fundingRate": -0.0000038189,
+      "fundingRateRaw": "-0.0000038189",
+      "fundingIntervalHours": 1,
+      "fundingApy": -0.033453564,
+      "markPrice": 1901.2,
+      "spotPrice": 1902.11,
+      "basis": -0.00047841607478005255,
+      "basisApy": null,
+      "openInterestUsd": 1858807811.9045823,
+      "netCarryApy": -0.034053564,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "SOL",
+      "fundingRate": 0.0000125,
+      "fundingRateRaw": "0.0000125",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.1095,
+      "markPrice": 72.651,
+      "spotPrice": 72.675,
+      "basis": -0.0003302373581011153,
+      "basisApy": null,
+      "openInterestUsd": 292557314.277,
+      "netCarryApy": 0.1089,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "HYPE",
+      "fundingRate": 0.0000111489,
+      "fundingRateRaw": "0.0000111489",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.09766436399999999,
+      "markPrice": 55.622,
+      "spotPrice": 55.6425,
+      "basis": -0.00036842341735177087,
+      "basisApy": null,
+      "openInterestUsd": 1203242164.9155002,
+      "netCarryApy": 0.09706436399999999,
+      "tag": "harvestable"
+    }
+  ],
+  "source": "live"
+}
