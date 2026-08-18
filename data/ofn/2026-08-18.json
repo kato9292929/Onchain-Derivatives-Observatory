@@ -1,0 +1,71 @@
+{
+  "date": "2026-08-18",
+  "generatedAt": "2026-08-18T01:45:56.240Z",
+  "observations": [
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "BTC",
+      "fundingRate": -0.000009841,
+      "fundingRateRaw": "-0.000009841",
+      "fundingIntervalHours": 1,
+      "fundingApy": -0.08620715999999999,
+      "markPrice": 64234,
+      "spotPrice": 64272.8,
+      "basis": -0.0006036768275227145,
+      "basisApy": null,
+      "openInterestUsd": 2746098041.7137284,
+      "netCarryApy": -0.08680716,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "ETH",
+      "fundingRate": 0.0000119241,
+      "fundingRateRaw": "0.0000119241",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.104455116,
+      "markPrice": 1903.7,
+      "spotPrice": 1904.6,
+      "basis": -0.00047254016591402603,
+      "basisApy": null,
+      "openInterestUsd": 1745742465.56208,
+      "netCarryApy": 0.103855116,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "SOL",
+      "fundingRate": 0.0000054325,
+      "fundingRateRaw": "0.0000054325",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.0475887,
+      "markPrice": 75.735,
+      "spotPrice": 75.765,
+      "basis": -0.00039596119580287414,
+      "basisApy": null,
+      "openInterestUsd": 385528743.26610005,
+      "netCarryApy": 0.046988699999999994,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "HYPE",
+      "fundingRate": -0.0000037408,
+      "fundingRateRaw": "-0.0000037408",
+      "fundingIntervalHours": 1,
+      "fundingApy": -0.032769408,
+      "markPrice": 59.321,
+      "spotPrice": 59.3505,
+      "basis": -0.0004970472026352146,
+      "basisApy": null,
+      "openInterestUsd": 1339542699.6471298,
+      "netCarryApy": -0.033369408,
+      "tag": "harvestable"
+    }
+  ],
+  "source": "live"
+}
