@@ -1,0 +1,71 @@
+{
+  "date": "2026-08-19",
+  "generatedAt": "2026-08-19T01:48:21.069Z",
+  "observations": [
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "BTC",
+      "fundingRate": -0.0000051631,
+      "fundingRateRaw": "-0.0000051631",
+      "fundingIntervalHours": 1,
+      "fundingApy": -0.045228755999999995,
+      "markPrice": 64371.6,
+      "spotPrice": 64406,
+      "basis": -0.0005341117287209762,
+      "basisApy": null,
+      "openInterestUsd": 2668357681.08112,
+      "netCarryApy": -0.045828756,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "ETH",
+      "fundingRate": 0.0000069273,
+      "fundingRateRaw": "0.0000069273",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.060683148,
+      "markPrice": 1912.7,
+      "spotPrice": 1913.7,
+      "basis": -0.0005225479437738212,
+      "basisApy": null,
+      "openInterestUsd": 1705647094.0506594,
+      "netCarryApy": 0.060083147999999996,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "SOL",
+      "fundingRate": 0.0000046676,
+      "fundingRateRaw": "0.0000046676",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.040888176,
+      "markPrice": 76.713,
+      "spotPrice": 76.755,
+      "basis": -0.0005471956224349928,
+      "basisApy": null,
+      "openInterestUsd": 400552037.28540015,
+      "netCarryApy": 0.040288175999999995,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "HYPE",
+      "fundingRate": -0.0000158422,
+      "fundingRateRaw": "-0.0000158422",
+      "fundingIntervalHours": 1,
+      "fundingApy": -0.138777672,
+      "markPrice": 58.577,
+      "spotPrice": 58.621,
+      "basis": -0.0007505842616127856,
+      "basisApy": null,
+      "openInterestUsd": 1317651575.4207003,
+      "netCarryApy": -0.13937767199999998,
+      "tag": "harvestable"
+    }
+  ],
+  "source": "live"
+}
