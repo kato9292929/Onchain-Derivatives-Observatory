@@ -1,0 +1,71 @@
+{
+  "date": "2026-08-23",
+  "generatedAt": "2026-08-23T01:55:52.862Z",
+  "observations": [
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "BTC",
+      "fundingRate": 0.0000281643,
+      "fundingRateRaw": "0.0000281643",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.24671926800000002,
+      "markPrice": 77264,
+      "spotPrice": 77218,
+      "basis": 0.0005957160247611615,
+      "basisApy": null,
+      "openInterestUsd": 2811743894.10092,
+      "netCarryApy": 0.24611926800000003,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "ETH",
+      "fundingRate": 0.0000125,
+      "fundingRateRaw": "0.0000125",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.1095,
+      "markPrice": 2427.7,
+      "spotPrice": 2426.92,
+      "basis": 0.0003213950192011428,
+      "basisApy": null,
+      "openInterestUsd": 1905344334.1648962,
+      "netCarryApy": 0.1089,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "SOL",
+      "fundingRate": 0.0000285445,
+      "fundingRateRaw": "0.0000285445",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.25004982000000003,
+      "markPrice": 96.152,
+      "spotPrice": 96.0916,
+      "basis": 0.0006285669090742019,
+      "basisApy": null,
+      "openInterestUsd": 483063173.9605759,
+      "netCarryApy": 0.24944982000000004,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "HYPE",
+      "fundingRate": 0.0000478723,
+      "fundingRateRaw": "0.0000478723",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.41936134799999997,
+      "markPrice": 79.912,
+      "spotPrice": 79.879,
+      "basis": 0.0004131248513377095,
+      "basisApy": null,
+      "openInterestUsd": 1998818835.7739387,
+      "netCarryApy": 0.418761348,
+      "tag": "harvestable"
+    }
+  ],
+  "source": "live"
+}
