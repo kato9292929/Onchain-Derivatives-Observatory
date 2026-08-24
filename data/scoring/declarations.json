@@ -206,5 +206,31 @@
       "value": "derive/covered_call"
     },
     "agentId": ""
+  },
+  {
+    "id": "OFN-2026-W35-17",
+    "module": "OFN",
+    "declaredAt": "2026-08-24T02:24:49.486Z",
+    "week": "2026-W35",
+    "claim": "今週のMajorsバスケットのnet carryは正(>0)である",
+    "predicate": {
+      "metric": "majors.netCarryApy",
+      "op": "gt",
+      "value": 0
+    },
+    "agentId": ""
+  },
+  {
+    "id": "PCM-2026-W35-18",
+    "module": "PCM",
+    "declaredAt": "2026-08-24T02:24:49.486Z",
+    "week": "2026-W35",
+    "claim": "今週、最も捕捉率の高い会場/戦略は derive/covered_call である",
+    "predicate": {
+      "metric": "pcm.captureRate.rank1",
+      "op": "eq",
+      "value": "derive/covered_call"
+    },
+    "agentId": ""
   }
 ]
