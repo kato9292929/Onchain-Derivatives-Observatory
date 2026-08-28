@@ -1,0 +1,71 @@
+{
+  "date": "2026-08-28",
+  "generatedAt": "2026-08-28T11:15:38.211Z",
+  "observations": [
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "BTC",
+      "fundingRate": 0.0000125,
+      "fundingRateRaw": "0.0000125",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.1095,
+      "markPrice": 79676,
+      "spotPrice": 79696,
+      "basis": -0.0002509536237703669,
+      "basisApy": null,
+      "openInterestUsd": 2823942139.39936,
+      "netCarryApy": 0.1089,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "ETH",
+      "fundingRate": 0.0000125,
+      "fundingRateRaw": "0.0000125",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.1095,
+      "markPrice": 2509.4,
+      "spotPrice": 2509.8,
+      "basis": -0.00015937524902387423,
+      "basisApy": null,
+      "openInterestUsd": 1902537402.6218407,
+      "netCarryApy": 0.1089,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "SOL",
+      "fundingRate": -0.0000028543,
+      "fundingRateRaw": "-0.0000028543",
+      "fundingIntervalHours": 1,
+      "fundingApy": -0.025003668,
+      "markPrice": 106.41,
+      "spotPrice": 106.495,
+      "basis": -0.0007981595380065487,
+      "basisApy": null,
+      "openInterestUsd": 640654101.2805,
+      "netCarryApy": -0.025603668,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "HYPE",
+      "fundingRate": 0.0000125,
+      "fundingRateRaw": "0.0000125",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.1095,
+      "markPrice": 83.444,
+      "spotPrice": 83.451,
+      "basis": -0.00008388155923821916,
+      "basisApy": null,
+      "openInterestUsd": 2110583762.2418404,
+      "netCarryApy": 0.1089,
+      "tag": "harvestable"
+    }
+  ],
+  "source": "live"
+}
