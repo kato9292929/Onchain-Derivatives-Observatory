@@ -174,5 +174,27 @@
     "error": null,
     "note": "実現値を解決できず(データ不足)",
     "agentId": ""
+  },
+  {
+    "declarationId": "OFN-2026-W35-17",
+    "week": "2026-W35",
+    "gradedAt": "2026-08-30T06:57:09.099Z",
+    "realizedValue": 0.1149837574285714,
+    "hit": true,
+    "brier": 0,
+    "error": 0.1149837574285714,
+    "note": "OK",
+    "agentId": ""
+  },
+  {
+    "declarationId": "PCM-2026-W35-18",
+    "week": "2026-W35",
+    "gradedAt": "2026-08-30T06:57:09.099Z",
+    "realizedValue": null,
+    "hit": null,
+    "brier": null,
+    "error": null,
+    "note": "実現値を解決できず(データ不足)",
+    "agentId": ""
   }
 ]
