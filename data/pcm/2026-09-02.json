@@ -1,0 +1,29 @@
+{
+  "date": "2026-09-02",
+  "generatedAt": "2026-09-02T04:36:38.676Z",
+  "observations": [
+    {
+      "venue": "derive",
+      "symbol": "BTC",
+      "strategy": "covered_call",
+      "instrument": "BTC-20260905-77000-C",
+      "strike": 77000,
+      "expiry": "2026-09-05T08:00:00.000Z",
+      "optionType": "call",
+      "spot": 77443,
+      "iv": 0.321493,
+      "ivSource": "derive get_ticker:option_pricing.iv",
+      "riskFreeRate": 0.045,
+      "riskFreeRateSource": "US 3M T-bill 近似。実運用ではオラクル/設定で更新。",
+      "fairPremium": 1174.2931012933986,
+      "receivedPremium": 1061,
+      "captureRate": 0.9035222968025491,
+      "takeRate": 0.09647770319745086,
+      "receiptSource": "board_bid",
+      "lowLiquidity": true,
+      "openInterestUsd": 1538427521.8169,
+      "volumeUsd": null
+    }
+  ],
+  "source": "live"
+}
