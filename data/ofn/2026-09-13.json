@@ -1,0 +1,71 @@
+{
+  "date": "2026-09-13",
+  "generatedAt": "2026-09-13T04:58:01.791Z",
+  "observations": [
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "BTC",
+      "fundingRate": 0.0000119048,
+      "fundingRateRaw": "0.0000119048",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.104286048,
+      "markPrice": 77181.4,
+      "spotPrice": 77215.4,
+      "basis": -0.00044032667058646613,
+      "basisApy": null,
+      "openInterestUsd": 2765638816.422648,
+      "netCarryApy": 0.103686048,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "ETH",
+      "fundingRate": 0.0000125,
+      "fundingRateRaw": "0.0000125",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.1095,
+      "markPrice": 2519.5,
+      "spotPrice": 2520.56,
+      "basis": -0.0004205414669755658,
+      "basisApy": null,
+      "openInterestUsd": 2481480390.3477283,
+      "netCarryApy": 0.1089,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "SOL",
+      "fundingRate": -7.621e-7,
+      "fundingRateRaw": "-0.0000007621",
+      "fundingIntervalHours": 1,
+      "fundingApy": -0.006675996,
+      "markPrice": 101.68,
+      "spotPrice": 101.745,
+      "basis": -0.0006388520320408375,
+      "basisApy": null,
+      "openInterestUsd": 547965447.9327002,
+      "netCarryApy": -0.007275996,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "HYPE",
+      "fundingRate": -0.0000010926,
+      "fundingRateRaw": "-0.0000010926",
+      "fundingIntervalHours": 1,
+      "fundingApy": -0.009571175999999999,
+      "markPrice": 79.0693,
+      "spotPrice": 79.118,
+      "basis": -0.000615536287570384,
+      "basisApy": null,
+      "openInterestUsd": 1669034960.5170803,
+      "netCarryApy": -0.010171175999999999,
+      "tag": "harvestable"
+    }
+  ],
+  "source": "live"
+}
