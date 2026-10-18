@@ -1,0 +1,71 @@
+{
+  "date": "2026-10-18",
+  "generatedAt": "2026-10-18T04:19:53.075Z",
+  "observations": [
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "BTC",
+      "fundingRate": 0.0000050146,
+      "fundingRateRaw": "0.0000050146",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.043927896,
+      "markPrice": 81872,
+      "spotPrice": 81908.4,
+      "basis": -0.00044439886507363635,
+      "basisApy": null,
+      "openInterestUsd": 3357510667.829136,
+      "netCarryApy": 0.043327896,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "ETH",
+      "fundingRate": 0.0000083377,
+      "fundingRateRaw": "0.0000083377",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.073038252,
+      "markPrice": 2421.7,
+      "spotPrice": 2422.73,
+      "basis": -0.00042514023436379667,
+      "basisApy": null,
+      "openInterestUsd": 2510940604.0425158,
+      "netCarryApy": 0.072438252,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "SOL",
+      "fundingRate": 0.0000016077,
+      "fundingRateRaw": "0.0000016077",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.014083452000000002,
+      "markPrice": 104.17,
+      "spotPrice": 104.235,
+      "basis": -0.0006235909243536009,
+      "basisApy": null,
+      "openInterestUsd": 564299508.6317999,
+      "netCarryApy": 0.013483452000000002,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "HYPE",
+      "fundingRate": 0.0000125,
+      "fundingRateRaw": "0.0000125",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.1095,
+      "markPrice": 79.024,
+      "spotPrice": 79.04,
+      "basis": -0.00020242914979762272,
+      "basisApy": null,
+      "openInterestUsd": 1575240040.2752013,
+      "netCarryApy": 0.1089,
+      "tag": "harvestable"
+    }
+  ],
+  "source": "live"
+}
