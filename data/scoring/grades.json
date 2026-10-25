@@ -350,5 +350,27 @@
     "error": null,
     "note": "OK",
     "agentId": ""
+  },
+  {
+    "declarationId": "OFN-2026-W43-33",
+    "week": "2026-W43",
+    "gradedAt": "2026-10-25T06:26:04.440Z",
+    "realizedValue": 0.08660745814285715,
+    "hit": true,
+    "brier": 0,
+    "error": 0.08660745814285715,
+    "note": "OK",
+    "agentId": ""
+  },
+  {
+    "declarationId": "PCM-2026-W43-34",
+    "week": "2026-W43",
+    "gradedAt": "2026-10-25T06:26:04.440Z",
+    "realizedValue": "derive/covered_call",
+    "hit": true,
+    "brier": 0,
+    "error": null,
+    "note": "OK",
+    "agentId": ""
   }
 ]
