@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-09",
+  "generatedAt": "2026-11-09T06:06:08.921Z",
+  "observations": [
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "BTC",
+      "fundingRate": 0.0000125,
+      "fundingRateRaw": "0.0000125",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.1095,
+      "markPrice": 74590,
+      "spotPrice": 74601.5,
+      "basis": -0.0001541523963994873,
+      "basisApy": null,
+      "openInterestUsd": 3104845163.99928,
+      "netCarryApy": 0.1089,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "ETH",
+      "fundingRate": -0.0000058555,
+      "fundingRateRaw": "-0.0000058555",
+      "fundingIntervalHours": 1,
+      "fundingApy": -0.05129418,
+      "markPrice": 2132.3,
+      "spotPrice": 2133.5,
+      "basis": -0.0005624560581203308,
+      "basisApy": null,
+      "openInterestUsd": 1923552635.0900998,
+      "netCarryApy": -0.051894180000000005,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "SOL",
+      "fundingRate": -0.0000139669,
+      "fundingRateRaw": "-0.0000139669",
+      "fundingIntervalHours": 1,
+      "fundingApy": -0.122350044,
+      "markPrice": 86.645,
+      "spotPrice": 86.7007,
+      "basis": -0.0006424400264357644,
+      "basisApy": null,
+      "openInterestUsd": 467486281.5385699,
+      "netCarryApy": -0.12295004400000001,
+      "tag": "harvestable"
+    },
+    {
+      "venue": "hyperliquid",
+      "venueKind": "onchain",
+      "symbol": "HYPE",
+      "fundingRate": 0.0000020237,
+      "fundingRateRaw": "0.0000020237",
+      "fundingIntervalHours": 1,
+      "fundingApy": 0.017727612,
+      "markPrice": 73.958,
+      "spotPrice": 73.9955,
+      "basis": -0.0005067875749201756,
+      "basisApy": null,
+      "openInterestUsd": 1667397332.3699398,
+      "netCarryApy": 0.017127612,
+      "tag": "harvestable"
+    }
+  ],
+  "source": "live"
+}
