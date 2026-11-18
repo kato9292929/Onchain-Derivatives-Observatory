@@ -2,8 +2,7 @@ name: PCM daily collect
 
 # 日次cron。オプションのフェア値・実受取・捕捉率を採取し data/pcm/ にコミットする。
 on:
-  schedule:
-    - cron: "20 0 * * *" # 毎日 00:20 UTC
+  # 2026-11-18 停止: schedule を削除。再開時は git 履歴から戻す。
   workflow_dispatch:
     inputs:
       offline:

@@ -2,9 +2,7 @@ name: Scoring weekly
 
 # 週次。月曜に前向き宣言を作成、日曜に実現値と照合して採点。結果は agentId に紐づけて data/scoring/ にコミット。
 on:
-  schedule:
-    - cron: "0 1 * * 1" # 月 01:00 UTC: 宣言
-    - cron: "30 1 * * 0" # 日 01:30 UTC: 採点
+  # 2026-11-18 停止: schedule を削除。再開時は git 履歴から戻す。
   workflow_dispatch:
     inputs:
       mode:

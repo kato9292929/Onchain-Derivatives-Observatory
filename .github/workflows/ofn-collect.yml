@@ -4,8 +4,7 @@ name: OFN daily collect
 # 注: スケジュールトリガはデフォルトブランチでのみ発火する(GitHub仕様)。検証用に workflow_dispatch も用意。
 
 on:
-  schedule:
-    - cron: "10 0 * * *" # 毎日 00:10 UTC
+  # 2026-11-18 停止: schedule を削除。再開時は git 履歴から戻す。
   workflow_dispatch:
     inputs:
       offline:
